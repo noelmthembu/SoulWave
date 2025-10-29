@@ -1,8 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { getSamplePacks } from '../services/graphqlService';
-import { getComments, addComment, getUserCredits, useCredit } from '../services/supabaseService';
-import { generateCommentWithGemini } from '../services/geminiService';
+import { getSamplePacks, getCommentsForPack, addComment } from '../services/graphqlService';
 import SamplePackCard from '../components/SamplePackCard';
 import Input from '../components/Input';
 import { SamplePack, Comment } from '../types';
@@ -41,13 +39,10 @@ const HomePage: React.FC = () => {
     const [selectedGenre, setSelectedGenre] = useState('All');
     const [selectedPack, setSelectedPack] = useState<SamplePack | null>(null);
     
-    const [comments, setComments] = useState<any[]>([]);
+    const [comments, setComments] = useState<Comment[]>([]);
     const [commentsLoading, setCommentsLoading] = useState(false);
     const [newComment, setNewComment] = useState('');
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-    const [creditsRemaining, setCreditsRemaining] = useState(10);
-    const [userIdentifier, setUserIdentifier] = useState('');
-    const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
     useEffect(() => {
         const fetchPacks = async () => {
@@ -68,24 +63,11 @@ const HomePage: React.FC = () => {
     }, []);
 
     useEffect(() => {
-      let identifier = localStorage.getItem('userIdentifier');
-      if (!identifier) {
-        identifier = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('userIdentifier', identifier);
-      }
-      setUserIdentifier(identifier);
-
-      getUserCredits(identifier).then(credits => {
-        setCreditsRemaining(credits);
-      });
-    }, []);
-
-    useEffect(() => {
       const fetchComments = async () => {
         if (!selectedPack) return;
         setCommentsLoading(true);
         try {
-          const packComments = await getComments(selectedPack.id);
+          const packComments = await getCommentsForPack(selectedPack.id);
           setComments(packComments);
         } catch (error) {
           console.error('Failed to fetch comments');
@@ -115,47 +97,13 @@ const HomePage: React.FC = () => {
 
       setIsSubmittingComment(true);
       try {
-        const addedComment = await addComment(selectedPack.id, 'GuestUser', newComment, false, userIdentifier);
-        if (addedComment) {
-          setComments(prev => [addedComment, ...prev]);
-          setNewComment('');
-        }
+        const addedComment = await addComment({ packId: selectedPack.id, text: newComment, author: 'GuestUser' });
+        setComments(prev => [addedComment, ...prev]);
+        setNewComment('');
       } catch (error) {
         console.error("Failed to submit comment");
       } finally {
         setIsSubmittingComment(false);
-      }
-    };
-
-    const handleGenerateAIComment = async () => {
-      if (!selectedPack) return;
-
-      if (creditsRemaining <= 0) {
-        alert('No credits remaining! You cannot generate more AI comments.');
-        return;
-      }
-
-      setIsGeneratingAI(true);
-      try {
-        const success = await useCredit(userIdentifier);
-        if (!success) {
-          alert('Failed to use credit. Please try again.');
-          return;
-        }
-
-        const aiText = await generateCommentWithGemini(selectedPack);
-        const addedComment = await addComment(selectedPack.id, 'AI Assistant', aiText, true, userIdentifier);
-
-        if (addedComment) {
-          setComments(prev => [addedComment, ...prev]);
-          const newCredits = await getUserCredits(userIdentifier);
-          setCreditsRemaining(newCredits);
-        }
-      } catch (error) {
-        console.error("Failed to generate AI comment");
-        alert('Failed to generate AI comment. Please try again.');
-      } finally {
-        setIsGeneratingAI(false);
       }
     }
 
@@ -253,13 +201,7 @@ const HomePage: React.FC = () => {
                                <CloseIcon className="w-6 h-6"/>
                             </button>
                              <div>
-                                {selectedPack.coverArt ? (
-                                    <img src={selectedPack.coverArt} alt={selectedPack.name} className="w-full h-auto object-cover rounded-lg shadow-lg" />
-                                ) : (
-                                    <div className="w-full aspect-square bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center rounded-lg shadow-lg">
-                                        <span className="text-gray-500 text-6xl">♪</span>
-                                    </div>
-                                )}
+                                <img src={selectedPack.coverArt} alt={selectedPack.name} className="w-full h-auto object-cover rounded-lg shadow-lg" />
                             </div>
                             <div className="flex flex-col">
                                 <div>
@@ -274,23 +216,7 @@ const HomePage: React.FC = () => {
                                 </div>
                                 <p className="mt-6 text-gray-300 ">{selectedPack.longDescription}</p>
                                 <div className="mt-8">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h2 className="text-2xl font-bold text-white">Comments</h2>
-                                        <div className="text-sm">
-                                            <span className="text-gray-400">AI Credits: </span>
-                                            <span className="text-brand-cyan font-bold">{creditsRemaining}</span>
-                                        </div>
-                                    </div>
-                                    <div className="mb-4">
-                                        <Button
-                                            onClick={handleGenerateAIComment}
-                                            isLoading={isGeneratingAI}
-                                            disabled={creditsRemaining <= 0}
-                                            className="w-full mb-3"
-                                        >
-                                            {creditsRemaining > 0 ? '✨ Generate AI Comment' : '🚫 No Credits Left'}
-                                        </Button>
-                                    </div>
+                                    <h2 className="text-2xl font-bold text-white mb-4">Comments</h2>
                                     <form onSubmit={handleCommentSubmit} className="flex gap-2 mb-4">
                                         <Input
                                           id="newComment"
@@ -309,16 +235,9 @@ const HomePage: React.FC = () => {
                                           <p className="text-gray-400">Loading comments...</p>
                                         ) : comments.length > 0 ? (
                                             comments.map(comment => (
-                                                <div key={comment.id} className={`p-3 rounded-lg ${comment.ai_generated ? 'bg-gradient-to-r from-cyan-900/30 to-brand-dark border border-brand-cyan/30' : 'bg-brand-dark'}`}>
-                                                    <div className="flex items-start gap-2">
-                                                        {comment.ai_generated && <span className="text-brand-cyan text-sm">✨</span>}
-                                                        <div className="flex-1">
-                                                            <p className="text-gray-300">{comment.text}</p>
-                                                            <p className="text-xs text-gray-500 mt-1 text-right">
-                                                                by {comment.author} on {new Date(comment.created_at).toLocaleDateString()}
-                                                            </p>
-                                                        </div>
-                                                    </div>
+                                                <div key={comment.id} className="bg-brand-dark p-3 rounded-lg">
+                                                    <p className="text-gray-300">{comment.text}</p>
+                                                    <p className="text-xs text-gray-500 mt-1 text-right">by {comment.author} on {new Date(comment.createdAt).toLocaleDateString()}</p>
                                                 </div>
                                             ))
                                         ) : (

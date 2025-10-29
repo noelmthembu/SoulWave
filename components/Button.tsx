@@ -33,7 +33,7 @@ const Button: React.FC<ButtonProps> = ({
   return (
     <button
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
-      disabled={isLoading || props.disabled}
+      disabled={isLoading}
       {...props}
     >
       {isLoading && (

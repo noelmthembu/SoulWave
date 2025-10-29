@@ -67,16 +67,11 @@ export const getSamplePacks = async (): Promise<SamplePack[]> => {
     }
 
     // Transform the data to match the frontend's expected SamplePack type
-    const transformedPacks = data.samplePacks.map((pack: any) => {
-        console.log('Raw pack data:', pack);
-        return {
-            ...pack,
-            coverArt: pack.coverArt?.url || '',
-            longDescription: pack.longDescription || pack.description || '',
-        };
-    });
-    console.log('Transformed packs:', transformedPacks);
-    return transformedPacks;
+    return data.samplePacks.map((pack: any) => ({
+        ...pack,
+        coverArt: pack.coverArt || '',
+        longDescription: pack.longDescription || pack.description || '',
+    }));
 };
 
 // Fetches all comments for a specific sample pack
