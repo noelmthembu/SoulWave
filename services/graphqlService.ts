@@ -26,11 +26,12 @@ async function graphqlRequest(query: string, variables: Record<string, any> = {}
             body: JSON.stringify({ query, variables }),
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
         const json = await response.json();
+
+        if (!response.ok) {
+            console.error('HTTP Error Response:', json);
+            throw new Error(`HTTP error! status: ${response.status} - ${JSON.stringify(json)}`);
+        }
 
         if (json.errors) {
             console.error('GraphQL Error:', json.errors);
@@ -52,21 +53,24 @@ export const getSamplePacks = async (): Promise<SamplePack[]> => {
                 id
                 name
                 creator
-                coverArt {
-                    url
-                }
                 genre
                 description
-                longDescription
                 downloadUrl
             }
         }
     `;
     const data = await graphqlRequest(query);
+
+    if (!data || !data.samplePacks) {
+        console.error('No data returned from Hygraph');
+        return [];
+    }
+
     // Transform the data to match the frontend's expected SamplePack type
     return data.samplePacks.map((pack: any) => ({
         ...pack,
-        coverArt: pack.coverArt ? pack.coverArt.url : '',
+        coverArt: pack.coverArt || '',
+        longDescription: pack.longDescription || pack.description || '',
     }));
 };
 
