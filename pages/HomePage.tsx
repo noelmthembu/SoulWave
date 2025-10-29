@@ -201,7 +201,13 @@ const HomePage: React.FC = () => {
                                <CloseIcon className="w-6 h-6"/>
                             </button>
                              <div>
-                                <img src={selectedPack.coverArt} alt={selectedPack.name} className="w-full h-auto object-cover rounded-lg shadow-lg" />
+                                {selectedPack.coverArt ? (
+                                    <img src={selectedPack.coverArt} alt={selectedPack.name} className="w-full h-auto object-cover rounded-lg shadow-lg" />
+                                ) : (
+                                    <div className="w-full aspect-square bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center rounded-lg shadow-lg">
+                                        <span className="text-gray-500 text-6xl">♪</span>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex flex-col">
                                 <div>
