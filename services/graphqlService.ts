@@ -48,7 +48,7 @@ async function graphqlRequest(query: string, variables: Record<string, any> = {}
 export const getSamplePacks = async (): Promise<SamplePack[]> => {
     const query = `
         query GetSamplePacks {
-            samplePacks(orderBy: publishedAt_DESC) {
+            samplePacks {
                 id
                 name
                 creator
