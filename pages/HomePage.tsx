@@ -1,6 +1,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { getSamplePacks, getCommentsForPack, addComment } from '../services/graphqlService';
+import { getUserCredits, useCredit } from '../services/supabaseService';
+import { generateCommentWithGemini } from '../services/geminiService';
 import SamplePackCard from '../components/SamplePackCard';
 import Input from '../components/Input';
 import { SamplePack, Comment } from '../types';
@@ -43,6 +45,9 @@ const HomePage: React.FC = () => {
     const [commentsLoading, setCommentsLoading] = useState(false);
     const [newComment, setNewComment] = useState('');
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+    const [creditsRemaining, setCreditsRemaining] = useState(10);
+    const [userIdentifier, setUserIdentifier] = useState('');
+    const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
     useEffect(() => {
         const fetchPacks = async () => {
@@ -60,6 +65,19 @@ const HomePage: React.FC = () => {
         };
 
         fetchPacks();
+    }, []);
+
+    useEffect(() => {
+      let identifier = localStorage.getItem('userIdentifier');
+      if (!identifier) {
+        identifier = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('userIdentifier', identifier);
+      }
+      setUserIdentifier(identifier);
+
+      getUserCredits(identifier).then(credits => {
+        setCreditsRemaining(credits);
+      });
     }, []);
 
     useEffect(() => {
@@ -104,6 +122,36 @@ const HomePage: React.FC = () => {
         console.error("Failed to submit comment");
       } finally {
         setIsSubmittingComment(false);
+      }
+    };
+
+    const handleGenerateAIComment = async () => {
+      if (!selectedPack) return;
+
+      if (creditsRemaining <= 0) {
+        alert('No credits remaining! You cannot generate more AI comments.');
+        return;
+      }
+
+      setIsGeneratingAI(true);
+      try {
+        const success = await useCredit(userIdentifier);
+        if (!success) {
+          alert('Failed to use credit. Please try again.');
+          return;
+        }
+
+        const aiText = await generateCommentWithGemini(selectedPack);
+        const addedComment = await addComment({ packId: selectedPack.id, text: aiText, author: 'AI Assistant' });
+
+        setComments(prev => [addedComment, ...prev]);
+        const newCredits = await getUserCredits(userIdentifier);
+        setCreditsRemaining(newCredits);
+      } catch (error) {
+        console.error("Failed to generate AI comment");
+        alert('Failed to generate AI comment. Please try again.');
+      } finally {
+        setIsGeneratingAI(false);
       }
     }
 
@@ -201,7 +249,13 @@ const HomePage: React.FC = () => {
                                <CloseIcon className="w-6 h-6"/>
                             </button>
                              <div>
-                                <img src={selectedPack.coverArt} alt={selectedPack.name} className="w-full h-auto object-cover rounded-lg shadow-lg" />
+                                {selectedPack.coverArt ? (
+                                    <img src={selectedPack.coverArt} alt={selectedPack.name} className="w-full h-auto object-cover rounded-lg shadow-lg" />
+                                ) : (
+                                    <div className="w-full aspect-square bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center rounded-lg shadow-lg">
+                                        <span className="text-gray-500 text-6xl">♪</span>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex flex-col">
                                 <div>
@@ -216,7 +270,23 @@ const HomePage: React.FC = () => {
                                 </div>
                                 <p className="mt-6 text-gray-300 ">{selectedPack.longDescription}</p>
                                 <div className="mt-8">
-                                    <h2 className="text-2xl font-bold text-white mb-4">Comments</h2>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h2 className="text-2xl font-bold text-white">Comments</h2>
+                                        <div className="text-sm">
+                                            <span className="text-gray-400">AI Credits: </span>
+                                            <span className="text-brand-cyan font-bold">{creditsRemaining}</span>
+                                        </div>
+                                    </div>
+                                    <div className="mb-4">
+                                        <Button
+                                            onClick={handleGenerateAIComment}
+                                            isLoading={isGeneratingAI}
+                                            disabled={creditsRemaining <= 0}
+                                            className="w-full mb-3"
+                                        >
+                                            {creditsRemaining > 0 ? '✨ Generate AI Comment' : '🚫 No Credits Left'}
+                                        </Button>
+                                    </div>
                                     <form onSubmit={handleCommentSubmit} className="flex gap-2 mb-4">
                                         <Input
                                           id="newComment"
@@ -235,9 +305,16 @@ const HomePage: React.FC = () => {
                                           <p className="text-gray-400">Loading comments...</p>
                                         ) : comments.length > 0 ? (
                                             comments.map(comment => (
-                                                <div key={comment.id} className="bg-brand-dark p-3 rounded-lg">
-                                                    <p className="text-gray-300">{comment.text}</p>
-                                                    <p className="text-xs text-gray-500 mt-1 text-right">by {comment.author} on {new Date(comment.createdAt).toLocaleDateString()}</p>
+                                                <div key={comment.id} className={`p-3 rounded-lg ${comment.author === 'AI Assistant' ? 'bg-gradient-to-r from-cyan-900/30 to-brand-dark border border-brand-cyan/30' : 'bg-brand-dark'}`}>
+                                                    <div className="flex items-start gap-2">
+                                                        {comment.author === 'AI Assistant' && <span className="text-brand-cyan text-sm">✨</span>}
+                                                        <div className="flex-1">
+                                                            <p className="text-gray-300">{comment.text}</p>
+                                                            <p className="text-xs text-gray-500 mt-1 text-right">
+                                                                by {comment.author} on {new Date(comment.createdAt).toLocaleDateString()}
+                                                            </p>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             ))
                                         ) : (

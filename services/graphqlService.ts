@@ -78,7 +78,7 @@ export const getSamplePacks = async (): Promise<SamplePack[]> => {
 export const getCommentsForPack = async (packId: string): Promise<Comment[]> => {
     const query = `
         query GetCommentsForPack($packId: ID!) {
-            comments(where: { samplePack: { id: $packId } }, orderBy: createdAt_DESC) {
+            comments(where: { samplePack: { id: $packId } }, orderBy: createdAt_DESC, stage: PUBLISHED) {
                 id
                 author
                 text
@@ -86,9 +86,18 @@ export const getCommentsForPack = async (packId: string): Promise<Comment[]> => 
             }
         }
     `;
-    const data = await graphqlRequest(query, { packId });
-    // Add packId to each comment object for consistency
-    return data.comments.map((comment: any) => ({...comment, packId}));
+
+    try {
+        const data = await graphqlRequest(query, { packId });
+        if (!data || !data.comments) {
+            console.error('No comments data returned from Hygraph');
+            return [];
+        }
+        return data.comments.map((comment: any) => ({...comment, packId}));
+    } catch (error) {
+        console.error('Error fetching comments:', error);
+        return [];
+    }
 };
 
 // Creates a new comment, connects it to a sample pack, and publishes it.
