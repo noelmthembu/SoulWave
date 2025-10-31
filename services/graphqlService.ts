@@ -53,14 +53,14 @@ export const getSamplePacks = async (): Promise<SamplePack[]> => {
     id
     name
     creator
-    covertArt {
+    coverArt {
       url
     }
     genre
     description
     downloadUrl
   }
-            
+
         }
     `;
     const data = await graphqlRequest(query);
@@ -73,7 +73,7 @@ export const getSamplePacks = async (): Promise<SamplePack[]> => {
     // Transform the data to match the frontend's expected SamplePack type
     return data.samplePacks.map((pack: any) => ({
         ...pack,
-        coverArt: pack.coverArt || '',
+        coverArt: pack.coverArt?.url || '',
         longDescription: pack.longDescription || pack.description || '',
     }));
 };
