@@ -3,13 +3,15 @@ export interface SamplePack {
   id: string;
   name: string;
   creator: string;
-  coverArt: string;
+  coverArt: ImageType[];
   genre: string[];
   description: string;
   longDescription: string;
   downloadUrl: string;
 }
-
+export interface ImageType{
+  url: string;
+}
 export interface Tutorial {
   id: string; // YouTube video ID
   title: string;

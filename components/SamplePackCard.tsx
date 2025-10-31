@@ -12,7 +12,7 @@ const SamplePackCard: React.FC<SamplePackCardProps> = ({ pack, onViewDetails }) 
     <div className="bg-brand-light-dark rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-brand-cyan/20 hover:-translate-y-1 group flex flex-col">
       <button onClick={onViewDetails} className="block flex-grow text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-cyan rounded-t-lg">
         <div className="relative">
-          <img className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105" src={pack.coverArt} alt={pack.name} />
+          <img className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105" src={pack.coverArt[0].url} alt={pack.name} />
            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
              <span className="text-white font-bold border-2 border-white rounded-md px-4 py-2 text-sm">View Details</span>
           </div>
