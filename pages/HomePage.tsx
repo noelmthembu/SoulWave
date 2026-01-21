@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { getSamplePacks, getCommentsForPack, addComment } from '../services/graphqlService';
 import SamplePackCard from '../components/SamplePackCard';
@@ -201,7 +202,8 @@ const HomePage: React.FC = () => {
                                <CloseIcon className="w-6 h-6"/>
                             </button>
                              <div>
-                                <img src={selectedPack.coverArt} alt={selectedPack.name} className="w-full h-auto object-cover rounded-lg shadow-lg" />
+                                {/* FIX: The `selectedPack.coverArt` is an array of objects. The `src` attribute requires a URL string, which is the `url` property of the first element in the array. */}
+                                <img src={selectedPack.coverArt[0]?.url} alt={selectedPack.name} className="w-full h-auto object-cover rounded-lg shadow-lg" />
                             </div>
                             <div className="flex flex-col">
                                 <div>

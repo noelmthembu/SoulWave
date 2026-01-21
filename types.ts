@@ -3,15 +3,17 @@ export interface SamplePack {
   id: string;
   name: string;
   creator: string;
-  coverArt: ImageType[];
+  coverArt: ImageType[]; // matches GraphQL: coverArt { url }
   genre: string[];
   description: string;
   longDescription: string;
   downloadUrl: string;
 }
-export interface ImageType{
+
+export interface ImageType {
   url: string;
 }
+
 export interface Tutorial {
   id: string; // YouTube video ID
   title: string;
