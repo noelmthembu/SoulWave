@@ -4,17 +4,23 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SoundWave Samples</title>
+    <title>SoundWave - Heaven for Producers</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              'brand-cyan': '#06b6d4',
-              'brand-dark': '#0f172a',
-              'brand-light-dark': '#1e293b',
-              'brand-text': '#e2e8f0',
+              'brand-cyan': '#00c4d6',
+              'brand-cyan-dark': '#00a7be',
+              'brand-dark': '#071425',
+              'brand-panel': '#0f2630',
+              'brand-panel-light': '#14202a',
+              'brand-text': '#e6f6fb',
+              'brand-muted': '#98a7b2',
+            },
+            fontFamily: {
+              sans: ['Inter', 'Helvetica', 'Arial', 'sans-serif'],
             },
           },
         },
@@ -34,7 +40,7 @@
 }
 </script>
 </head>
-  <body class="bg-brand-dark">
+  <body class="bg-brand-dark text-brand-text">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

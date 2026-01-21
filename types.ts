@@ -1,36 +1,56 @@
-
-export interface SamplePack {
-  id: string;
-  name: string;
-  creator: string;
-  coverArt: ImageType[]; // matches GraphQL: coverArt { url }
-  genre: string[];
-  description: string;
-  longDescription: string;
-  downloadUrl: string;
-}
-
 export interface ImageType {
   url: string;
 }
 
-export interface Tutorial {
-  id: string; // YouTube video ID
-  title: string;
-  description:string;
-  channel: string;
+export interface Genre {
+  id: string;
+  name: string;
+  slug: string;
 }
 
-export interface User {
+export interface BaseContent {
   id: string;
-  email: string | null;
-  isAdmin: boolean;
+  name: string;
+  slug: string;
+  coverArt: ImageType[];
+  description: string;
+  downloadUrl: string;
+}
+
+export interface SamplePack extends BaseContent {
+  genre: string[];
+  featured?: boolean;
+}
+
+export interface Preset extends BaseContent {
+  genre: string[];
+  pluginCompatibility: string;
+}
+
+export interface Plugin extends BaseContent {
+  genre: string[];
+}
+
+export interface Tutorial {
+  id: string;
+  name: string;
+  slug: string;
+  creator: string;
+  channelUrl: string;
+  youtubeId: string;
+  description: string;
 }
 
 export interface Comment {
   id: string;
-  packId: string;
-  author: string;
+  entityId: string;
+  name: string; // Changed from authorName
   text: string;
   createdAt: string;
+}
+
+export interface ContactMessage {
+  name: string;
+  email: string;
+  message: string;
 }
