@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -42,7 +43,8 @@ const Icons = {
   ),
 };
 
-const SocialTile = ({ icon: Icon, name, url, colorClass }: { icon: React.FC, name: string, url: string, colorClass: string }) => (
+// FIX: Changed icon prop type to React.ComponentType for broader compatibility with functional icon components
+const SocialTile = ({ icon: Icon, name, url, colorClass }: { icon: React.ComponentType, name: string, url: string, colorClass: string }) => (
   <a 
     href={url} 
     target="_blank" 
@@ -101,8 +103,15 @@ const ContactPage: React.FC = () => {
               The Community
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {socialLinks.map((social) => (
-                <SocialTile key={social.name} {...social} />
+              {/* FIX: Explicitly destructuring to avoid passing implicit properties into the component, resolving the TypeScript error on line 105 */}
+              {socialLinks.map(({ icon, name, url, colorClass }) => (
+                <SocialTile 
+                  key={name} 
+                  icon={icon as React.ComponentType} 
+                  name={name} 
+                  url={url} 
+                  colorClass={colorClass} 
+                />
               ))}
             </div>
           </div>

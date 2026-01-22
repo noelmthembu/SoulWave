@@ -96,7 +96,6 @@ export const getPresets = async (): Promise<Preset[]> => {
 };
 
 export const getPlugins = async (): Promise<Plugin[]> => {
-    // FIX: Removed 'genre' from query because it's reported as undefined for the Plugin model
     const query = `
         query {
             plugins {
@@ -117,11 +116,10 @@ export const getTutorials = async (): Promise<Tutorial[]> => {
 };
 
 export const getComments = async (entityId: string): Promise<Comment[]> => {
-    // FIX: Changed 'authorName' to 'name'
     const query = `
         query GetComments($entityId: String!) {
             comments(where: { entityId: $entityId }, orderBy: createdAt_DESC) {
-                id name text createdAt
+                id authorName text createdAt
             }
         }
     `;
@@ -134,15 +132,14 @@ export const getComments = async (entityId: string): Promise<Comment[]> => {
 };
 
 export const addComment = async (entityId: string, authorName: string, text: string): Promise<Comment> => {
-    // FIX: Changed 'authorName' to 'name' in mutation data
     const mutation = `
-        mutation CreateComment($entityId: String!, $name: String!, $text: String!) {
-            createComment(data: { entityId: $entityId, name: $name, text: $text }) {
-                id name text createdAt
+        mutation CreateComment($entityId: String!, $authorName: String!, $text: String!) {
+            createComment(data: { entityId: $entityId, authorName: $authorName, text: $text }) {
+                id authorName text createdAt
             }
         }
     `;
-    const response = await graphqlRequest(mutation, { entityId, name: authorName, text });
+    const response = await graphqlRequest(mutation, { entityId, authorName, text });
     
     if (response.data?.createComment) {
         try {
@@ -154,7 +151,7 @@ export const addComment = async (entityId: string, authorName: string, text: str
     const fallbackComment: Comment = {
         id: `local-${Date.now()}`,
         entityId,
-        name: authorName,
+        authorName,
         text,
         createdAt: new Date().toISOString()
     };

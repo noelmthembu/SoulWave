@@ -141,7 +141,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ item, onClose }) => {
                 comments.map(c => (
                   <div key={c.id} className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/[0.07] transition-colors">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="font-black text-brand-cyan text-[10px] uppercase tracking-wider">{c.name}</span>
+                      <span className="font-black text-brand-cyan text-[10px] uppercase tracking-wider">{c.authorName}</span>
                       <span className="text-[9px] text-brand-muted font-medium">{new Date(c.createdAt).toLocaleDateString()}</span>
                     </div>
                     <p className="text-xs text-brand-text leading-relaxed">{c.text}</p>

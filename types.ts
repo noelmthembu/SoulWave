@@ -44,7 +44,7 @@ export interface Tutorial {
 export interface Comment {
   id: string;
   entityId: string;
-  name: string; // Changed from authorName
+  authorName: string; // Reverted from name
   text: string;
   createdAt: string;
 }

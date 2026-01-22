@@ -7,7 +7,6 @@ import HomePage from './pages/HomePage';
 import PacksPage from './pages/PacksPage';
 import PresetsPage from './pages/PresetsPage';
 import PluginsPage from './pages/PluginsPage';
-import TutorialsPage from './pages/TutorialsPage';
 import ContactPage from './pages/ContactPage';
 import NotFoundPage from './pages/NotFoundPage';
 
@@ -21,7 +20,6 @@ const AppContent: React.FC = () => {
           <Route path="/packs" element={<PacksPage />} />
           <Route path="/presets" element={<PresetsPage />} />
           <Route path="/plugins" element={<PluginsPage />} />
-          <Route path="/tutorials" element={<TutorialsPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
