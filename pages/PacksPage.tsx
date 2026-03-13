@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getSamplePacks, getGenres } from '../services/graphqlService';
 import { SamplePack, Genre } from '../types';
 import SamplePackCard from '../components/SamplePackCard';
@@ -7,6 +7,7 @@ import ContentModal from '../components/ContentModal';
 import Button from '../components/Button';
 
 const PacksPage: React.FC = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSearch = searchParams.get('q') || '';
   
@@ -14,7 +15,6 @@ const PacksPage: React.FC = () => {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedGenre, setSelectedGenre] = useState('All');
   const [inputValue, setInputValue] = useState(initialSearch);
-  const [appliedSearch, setAppliedSearch] = useState(initialSearch);
   const [loading, setLoading] = useState(true);
   const [selectedPack, setSelectedPack] = useState<SamplePack | null>(null);
 
@@ -41,24 +41,28 @@ const PacksPage: React.FC = () => {
   useEffect(() => {
     const q = searchParams.get('q') || '';
     setInputValue(q);
-    setAppliedSearch(q);
   }, [searchParams]);
 
   const handleSearchSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    setAppliedSearch(inputValue);
-    // Update URL without full refresh
-    setSearchParams(inputValue ? { q: inputValue } : {});
+    if (inputValue.trim()) {
+      navigate(`/search?q=${encodeURIComponent(inputValue.trim())}`);
+    }
   };
 
   const filteredPacks = useMemo(() => {
     return packs.filter(p => {
       const genreNames = p.genre || [];
       const matchesGenre = selectedGenre === 'All' || genreNames.includes(selectedGenre);
-      const matchesSearch = p.name.toLowerCase().includes(appliedSearch.toLowerCase());
+      
+      const searchLower = inputValue.toLowerCase();
+      const matchesSearch = 
+        p.name.toLowerCase().includes(searchLower) || 
+        (p.description && p.description.toLowerCase().includes(searchLower));
+        
       return matchesGenre && matchesSearch;
     });
-  }, [packs, selectedGenre, appliedSearch]);
+  }, [packs, selectedGenre, inputValue]);
 
   return (
     <div className="space-y-8">
@@ -76,13 +80,15 @@ const PacksPage: React.FC = () => {
               placeholder="Search packs..."
               className="w-full px-5 py-3 bg-brand-panel border border-white/10 rounded-2xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all shadow-lg"
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                setSearchParams(e.target.value ? { q: e.target.value } : {}, { replace: true });
+              }}
             />
           </div>
           <Button 
             type="submit" 
-            className="rounded-2xl px-6 py-3 font-black uppercase text-xs tracking-widest"
+            className="rounded-2xl px-6 py-3 font-black uppercase text-xs tracking-widest shrink-0"
           >
             Search
           </Button>
@@ -121,13 +127,21 @@ const PacksPage: React.FC = () => {
         </div>
       ) : (
         <div className="text-center py-20 bg-brand-panel/30 rounded-[3rem] border border-dashed border-white/10">
-          <p className="text-xl font-bold text-brand-muted mb-2">No packs found for "{appliedSearch}"</p>
-          <button 
-            onClick={() => { setInputValue(''); setAppliedSearch(''); setSearchParams({}); }}
-            className="text-brand-cyan hover:underline font-black uppercase text-xs tracking-widest"
-          >
-            Clear all filters
-          </button>
+          <p className="text-xl font-bold text-brand-muted mb-4">No packs found for "{inputValue}"</p>
+          <div className="flex flex-col items-center gap-4">
+            <Button 
+              onClick={() => navigate(`/search?q=${encodeURIComponent(inputValue)}`)}
+              className="px-8 py-3 rounded-full font-black uppercase text-xs tracking-widest"
+            >
+              Search All Categories
+            </Button>
+            <button 
+              onClick={() => { setInputValue(''); setSearchParams({}); }}
+              className="text-brand-cyan hover:underline font-black uppercase text-[10px] tracking-widest opacity-60"
+            >
+              Clear all filters
+            </button>
+          </div>
         </div>
       )}
 

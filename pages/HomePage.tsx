@@ -7,6 +7,15 @@ import { useNavigate } from 'react-router-dom';
 
 const Hero: React.FC = () => {
   const navigate = useNavigate();
+  const [query, setQuery] = useState('');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+    }
+  };
+
   return (
     <div className="relative overflow-hidden py-24 px-6 text-center bg-gradient-to-b from-brand-panel to-brand-dark rounded-3xl border border-white/5 mb-16">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-brand-cyan/10 blur-[120px] rounded-full -z-10"></div>
@@ -16,11 +25,30 @@ const Hero: React.FC = () => {
       <p className="text-xl text-brand-muted max-w-2xl mx-auto mb-10 leading-relaxed">
         Discover thousands of royalty-free sample packs, presets, loops, and tutorials to elevate your productions. All completely free.
       </p>
+      
+      <div className="max-w-xl mx-auto mb-10">
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <input 
+            type="text"
+            placeholder="Search for anything..."
+            className="flex-1 bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-lg text-white placeholder-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 focus:bg-white/10 transition-all"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <button 
+            type="submit"
+            className="bg-brand-cyan hover:bg-cyan-400 text-brand-dark font-black px-8 py-4 rounded-2xl text-lg shadow-xl shadow-brand-cyan/20 transition-all transform hover:scale-105 active:scale-95"
+          >
+            Search
+          </button>
+        </form>
+      </div>
+
       <button 
         onClick={() => navigate('/packs')}
-        className="bg-brand-cyan hover:bg-cyan-400 text-brand-dark font-black px-10 py-4 rounded-full text-lg shadow-xl shadow-brand-cyan/20 transition-all transform hover:scale-105 active:scale-95"
+        className="text-brand-cyan hover:underline font-black uppercase text-xs tracking-widest opacity-60"
       >
-        Explore Packs
+        Or browse all packs
       </button>
     </div>
   );

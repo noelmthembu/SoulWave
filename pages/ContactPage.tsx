@@ -44,7 +44,7 @@ const Icons = {
 };
 
 // FIX: Changed icon prop type to React.ComponentType for broader compatibility with functional icon components
-const SocialTile = ({ icon: Icon, name, url, colorClass }: { icon: React.ComponentType, name: string, url: string, colorClass: string }) => (
+const SocialTile: React.FC<{ icon: React.ComponentType, name: string, url: string, colorClass: string }> = ({ icon: Icon, name, url, colorClass }) => (
   <a 
     href={url} 
     target="_blank" 

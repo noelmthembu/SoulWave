@@ -8,8 +8,9 @@ const Header: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/packs?q=${encodeURIComponent(searchQuery.trim())}`);
+    const query = searchQuery.trim();
+    if (query) {
+      navigate(`/search?q=${encodeURIComponent(query)}`);
       setSearchQuery('');
     }
   };
@@ -29,6 +30,9 @@ const Header: React.FC = () => {
             <Link to="/" className="flex items-center group">
               <span className="text-2xl font-black tracking-tighter text-white">
                 SOUND<span className="text-brand-cyan group-hover:text-cyan-300 transition-colors">WAVE</span>
+                <span className="animate-rgb-glow ml-1">
+                  -RSA
+                </span>
               </span>
             </Link>
             

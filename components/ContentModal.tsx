@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { SamplePack, Comment } from '../types';
-import { getComments, addComment } from '../services/graphqlService';
+import React, { useEffect } from 'react';
+import { SamplePack } from '../types';
 import Button from './Button';
 import { CloseIcon } from '../constants';
 
@@ -10,15 +9,7 @@ interface ContentModalProps {
 }
 
 const ContentModal: React.FC<ContentModalProps> = ({ item, onClose }) => {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState({ name: '', text: '' });
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
   useEffect(() => {
-    setLoading(true);
-    getComments(item.slug).then(setComments).finally(() => setLoading(false));
-    
     const handleEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', handleEsc);
     document.body.style.overflow = 'hidden';
@@ -27,22 +18,6 @@ const ContentModal: React.FC<ContentModalProps> = ({ item, onClose }) => {
       document.body.style.overflow = 'unset';
     };
   }, [item.slug, onClose]);
-
-  const handleCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.text.trim()) return;
-    setSubmitting(true);
-    try {
-      const name = newComment.name.trim() || 'Anonymous';
-      const res = await addComment(item.slug, name, newComment.text);
-      setComments([res, ...comments]);
-      setNewComment({ name: '', text: '' });
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const coverUrl = item.coverArt?.[0]?.url || 'https://via.placeholder.com/600';
 
@@ -103,57 +78,6 @@ const ContentModal: React.FC<ContentModalProps> = ({ item, onClose }) => {
             </a>
           </div>
 
-          <div className="pt-6 border-t border-white/5 mt-auto">
-            <h3 className="text-lg font-black mb-4 flex items-center gap-2 text-white">
-              Discussion 
-              <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-md text-brand-muted font-black">{comments.length}</span>
-            </h3>
-            
-            <form onSubmit={handleCommentSubmit} className="space-y-3 mb-6">
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input 
-                  type="text"
-                  placeholder="Your Name" 
-                  className="w-full sm:w-1/3 px-4 py-2 bg-brand-dark/60 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-brand-cyan transition text-sm"
-                  value={newComment.name} 
-                  onChange={e => setNewComment({...newComment, name: e.target.value})}
-                />
-                <div className="flex flex-1 gap-2">
-                  <input 
-                    type="text"
-                    placeholder="Join the conversation..." 
-                    className="flex-1 px-4 py-2 bg-brand-dark/60 border border-white/10 rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-brand-cyan transition text-sm"
-                    value={newComment.text} 
-                    onChange={e => setNewComment({...newComment, text: e.target.value})}
-                    required
-                  />
-                  <Button type="submit" isLoading={submitting} className="rounded-xl px-5 py-2 shrink-0">Post</Button>
-                </div>
-              </div>
-            </form>
-
-            <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-2 custom-scrollbar">
-              {loading ? (
-                <div className="space-y-2">
-                  {[1,2].map(i => <div key={i} className="h-16 bg-white/5 animate-pulse rounded-xl"></div>)}
-                </div>
-              ) : comments.length > 0 ? (
-                comments.map(c => (
-                  <div key={c.id} className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/[0.07] transition-colors">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-black text-brand-cyan text-[10px] uppercase tracking-wider">{c.authorName}</span>
-                      <span className="text-[9px] text-brand-muted font-medium">{new Date(c.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    <p className="text-xs text-brand-text leading-relaxed">{c.text}</p>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 bg-white/5 rounded-xl border border-dashed border-white/10">
-                  <p className="text-brand-muted italic text-[11px] font-bold opacity-50 uppercase tracking-widest">No comments yet. Start the buzz!</p>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       </div>
     </div>
