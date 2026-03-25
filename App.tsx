@@ -3,7 +3,6 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
-import CustomCursor from './components/CustomCursor';
 import HomePage from './pages/HomePage';
 import PacksPage from './pages/PacksPage';
 import PresetsPage from './pages/PresetsPage';
@@ -15,7 +14,6 @@ import NotFoundPage from './pages/NotFoundPage';
 const AppContent: React.FC = () => {
   return (
     <div className="bg-brand-dark text-brand-text min-h-screen flex flex-col font-sans">
-      <CustomCursor />
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
         <Routes>

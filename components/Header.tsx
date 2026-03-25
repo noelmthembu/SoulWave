@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { Piano } from 'lucide-react';
 import Button from './Button';
 
 const Header: React.FC = () => {
@@ -28,11 +29,9 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between h-20 gap-4">
           <div className="flex items-center gap-6 lg:gap-8 shrink-0">
             <Link to="/" className="flex items-center group">
-              <span className="text-2xl font-black tracking-tighter text-white">
+              <span className="text-2xl font-black tracking-tighter text-white flex items-center">
                 SOUND<span className="text-brand-cyan group-hover:text-cyan-300 transition-colors">WAVE</span>
-                <span className="animate-rgb-glow ml-1">
-                  -RSA
-                </span>
+                <Piano className="ml-2 w-6 h-6 text-brand-cyan" />
               </span>
             </Link>
             
