@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getSamplePacks, getGenres } from '../services/graphqlService';
-import { SamplePack, Genre } from '../types';
-import SamplePackCard from '../components/SamplePackCard';
+import { getSamplePacks, getGenres, getPresets, getPlugins } from '../services/graphqlService';
+import { SamplePack, Genre, Preset, Plugin, BaseContent } from '../types';
+import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 import { useNavigate } from 'react-router-dom';
 
@@ -55,16 +55,26 @@ const Hero: React.FC = () => {
 };
 
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const [packs, setPacks] = useState<SamplePack[]>([]);
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [plugins, setPlugins] = useState<Plugin[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPack, setSelectedPack] = useState<SamplePack | null>(null);
+  const [selectedItem, setSelectedItem] = useState<BaseContent | null>(null);
 
   const fetchData = async (isInitial = false) => {
     if (isInitial) setLoading(true);
     try {
-      const [pData, gData] = await Promise.all([getSamplePacks(), getGenres()]);
-      setPacks(pData.filter(p => p.featured));
+      const [pData, gData, preData, pluData] = await Promise.all([
+        getSamplePacks(), 
+        getGenres(),
+        getPresets(),
+        getPlugins()
+      ]);
+      setPacks(pData.filter(p => p.featured).slice(0, 3));
+      setPresets(preData.slice(0, 3));
+      setPlugins(pluData.slice(0, 3));
       setGenres(gData);
     } catch (err) {
       console.error(err);
@@ -84,41 +94,119 @@ const HomePage: React.FC = () => {
     <div className="pb-20">
       <Hero />
       
-      <div className="mb-12">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold flex items-center gap-3">
-            <span className="w-2 h-8 bg-brand-cyan rounded-full"></span>
-            Featured Collections
+      {/* Featured Sample Packs */}
+      <div className="mb-20">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl font-black flex items-center gap-3">
+            <span className="w-2 h-10 bg-brand-cyan rounded-full"></span>
+            Featured Sample Packs
           </h2>
-          <span className="text-[10px] text-brand-muted font-black uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">Updates Real-Time</span>
+          <button 
+            onClick={() => navigate('/packs')}
+            className="text-brand-cyan hover:text-cyan-400 font-black uppercase text-xs tracking-widest transition-colors"
+          >
+            View All
+          </button>
         </div>
         
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[1, 2, 3].map(n => (
-              <div key={n} className="h-64 bg-white/5 animate-pulse rounded-2xl"></div>
+              <div key={n} className="aspect-square bg-white/5 animate-pulse rounded-[2rem]"></div>
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {packs.map(pack => (
-              <SamplePackCard 
+              <ContentCard 
                 key={pack.id} 
-                pack={pack} 
-                onViewDetails={() => setSelectedPack(pack)} 
+                item={pack} 
+                typeLabel="Pack"
+                onViewDetails={() => setSelectedItem(pack)} 
               />
             ))}
           </div>
         )}
       </div>
 
-      <div className="bg-brand-panel/50 border border-white/5 rounded-3xl p-8 text-center">
-        <h3 className="text-xl font-bold mb-4">Browse by Genre</h3>
+      {/* Presets Section */}
+      <div className="mb-20">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl font-black flex items-center gap-3">
+            <span className="w-2 h-10 bg-brand-cyan rounded-full"></span>
+            Latest Presets
+          </h2>
+          <button 
+            onClick={() => navigate('/presets')}
+            className="text-brand-cyan hover:text-cyan-400 font-black uppercase text-xs tracking-widest transition-colors"
+          >
+            View All
+          </button>
+        </div>
+        
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[1, 2, 3].map(n => (
+              <div key={n} className="aspect-square bg-white/5 animate-pulse rounded-[2rem]"></div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {presets.map(preset => (
+              <ContentCard 
+                key={preset.id} 
+                item={preset} 
+                typeLabel="Preset"
+                onViewDetails={() => setSelectedItem(preset)} 
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Plugins Section */}
+      <div className="mb-20">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl font-black flex items-center gap-3">
+            <span className="w-2 h-10 bg-brand-cyan rounded-full"></span>
+            Essential Plugins
+          </h2>
+          <button 
+            onClick={() => navigate('/plugins')}
+            className="text-brand-cyan hover:text-cyan-400 font-black uppercase text-xs tracking-widest transition-colors"
+          >
+            View All
+          </button>
+        </div>
+        
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[1, 2, 3].map(n => (
+              <div key={n} className="aspect-square bg-white/5 animate-pulse rounded-[2rem]"></div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {plugins.map(plugin => (
+              <ContentCard 
+                key={plugin.id} 
+                item={plugin} 
+                typeLabel="Plugin"
+                onViewDetails={() => setSelectedItem(plugin)} 
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-brand-panel/50 border border-white/5 rounded-[3rem] p-12 text-center">
+        <h3 className="text-2xl font-black mb-6">Browse by Genre</h3>
         <div className="flex flex-wrap justify-center gap-3">
           {genres.map(genre => (
             <button 
               key={genre.id}
-              className="px-6 py-2 rounded-full bg-white/5 hover:bg-white/10 text-sm font-medium transition-colors border border-white/5"
+              onClick={() => navigate(`/packs?genre=${genre.name}`)}
+              className="px-8 py-3 rounded-full bg-white/5 hover:bg-brand-cyan hover:text-brand-dark text-sm font-black transition-all border border-white/5 hover:scale-105"
             >
               {genre.name}
             </button>
@@ -126,10 +214,10 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {selectedPack && (
+      {selectedItem && (
         <ContentModal 
-          item={selectedPack} 
-          onClose={() => setSelectedPack(null)} 
+          item={selectedItem} 
+          onClose={() => setSelectedItem(null)} 
         />
       )}
     </div>
