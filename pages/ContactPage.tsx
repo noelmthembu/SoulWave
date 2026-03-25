@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import Button from '../components/Button';
 import Input from '../components/Input';
-import { sendContactMessage } from '../services/graphqlService';
 
 // Professional SVG Icons for Social Media
 const Icons = {
@@ -66,7 +65,14 @@ const ContactPage: React.FC = () => {
     e.preventDefault();
     setStatus('loading');
     try {
-      await sendContactMessage(form.name, form.email, form.message);
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      
+      if (!response.ok) throw new Error('Failed to send');
+      
       setStatus('success');
       setForm({ name: '', email: '', message: '' });
     } catch (err) {

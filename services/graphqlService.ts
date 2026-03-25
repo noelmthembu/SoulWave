@@ -85,7 +85,6 @@ export const getPresets = async (): Promise<Preset[]> => {
         query {
             presets {
                 id name slug description downloadUrl pluginCompatibility
-                genre
                 coverArt { url }
             }
         }
@@ -158,23 +157,4 @@ export const addComment = async (entityId: string, authorName: string, text: str
     if (!LOCAL_COMMENTS[entityId]) LOCAL_COMMENTS[entityId] = [];
     LOCAL_COMMENTS[entityId].unshift(fallbackComment);
     return fallbackComment;
-};
-
-export const sendContactMessage = async (name: string, email: string, message: string) => {
-    const mutation = `
-        mutation CreateContactMessage($name: String!, $email: String!, $message: String!) {
-            createContactMessage(data: { name: $name, email: $email, message: $message }) { 
-                id 
-            }
-        }
-    `;
-    const response = await graphqlRequest(mutation, { name, email, message });
-    
-    if (response.data?.createContactMessage) {
-        try {
-            await graphqlRequest(`mutation { publishContactMessage(where: { id: "${response.data.createContactMessage.id}" }, to: PUBLISHED) { id } }`);
-        } catch(e) {}
-        return true;
-    }
-    return true; 
 };
