@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getSamplePacks, getPresets, getPlugins } from '../services/graphqlService';
 import { SamplePack, Preset, Plugin } from '../types';
-import SamplePackCard from '../components/SamplePackCard';
+import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 
 type SearchResult = (SamplePack | Preset | Plugin) & { type: 'pack' | 'preset' | 'plugin' };
@@ -83,17 +83,12 @@ const SearchResultsPage: React.FC = () => {
       ) : filteredResults.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {filteredResults.map(item => (
-            <div key={`${item.type}-${item.id}`} className="relative">
-              <div className="absolute top-4 right-4 z-10">
-                <span className="px-2 py-1 bg-brand-dark/80 backdrop-blur-md border border-white/10 rounded-md text-[9px] font-black uppercase tracking-widest text-brand-cyan">
-                  {item.type}
-                </span>
-              </div>
-              <SamplePackCard 
-                pack={item as any} 
-                onViewDetails={() => setSelectedItem(item)} 
-              />
-            </div>
+            <ContentCard 
+              key={`${item.type}-${item.id}`} 
+              item={item} 
+              typeLabel={item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+              onViewDetails={() => setSelectedItem(item)} 
+            />
           ))}
         </div>
       ) : (

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getPlugins } from '../services/graphqlService';
 import { Plugin } from '../types';
-import SamplePackCard from '../components/SamplePackCard';
+import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 
 const PluginsPage: React.FC = () => {
@@ -89,9 +89,10 @@ const PluginsPage: React.FC = () => {
       ) : filteredPlugins.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {filteredPlugins.map(item => (
-            <SamplePackCard 
+            <ContentCard 
               key={item.id} 
-              pack={item as any} 
+              item={item} 
+              typeLabel="Plugin"
               onViewDetails={() => setSelectedItem(item)} 
             />
           ))}

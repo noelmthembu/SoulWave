@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getPresets } from '../services/graphqlService';
 import { Preset } from '../types';
-import SamplePackCard from '../components/SamplePackCard'; 
+import ContentCard from '../components/ContentCard'; 
 import ContentModal from '../components/ContentModal';
 
 const PresetsPage: React.FC = () => {
@@ -89,9 +89,10 @@ const PresetsPage: React.FC = () => {
       ) : filteredPresets.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {filteredPresets.map(item => (
-            <SamplePackCard 
+            <ContentCard 
               key={item.id} 
-              pack={item as any} 
+              item={item} 
+              typeLabel="Preset"
               onViewDetails={() => setSelectedItem(item)} 
             />
           ))}

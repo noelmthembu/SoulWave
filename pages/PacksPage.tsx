@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getSamplePacks, getGenres } from '../services/graphqlService';
 import { SamplePack, Genre } from '../types';
-import SamplePackCard from '../components/SamplePackCard';
+import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 import Button from '../components/Button';
 
@@ -118,9 +118,10 @@ const PacksPage: React.FC = () => {
       ) : filteredPacks.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {filteredPacks.map(pack => (
-            <SamplePackCard 
+            <ContentCard 
               key={pack.id} 
-              pack={pack} 
+              item={pack} 
+              typeLabel="Pack"
               onViewDetails={() => setSelectedPack(pack)} 
             />
           ))}

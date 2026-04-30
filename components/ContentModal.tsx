@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
-import { SamplePack } from '../types';
+import { SamplePack, Preset, Plugin, BaseContent } from '../types';
 import Button from './Button';
 import { CloseIcon } from '../constants';
 
 interface ContentModalProps {
-  item: SamplePack;
+  item: BaseContent | SamplePack | Preset | Plugin;
   onClose: () => void;
 }
 
@@ -19,7 +19,14 @@ const ContentModal: React.FC<ContentModalProps> = ({ item, onClose }) => {
     };
   }, [item.slug, onClose]);
 
-  const coverUrl = item.coverArt?.[0]?.url || 'https://via.placeholder.com/600';
+  const coverUrl = item.coverArt?.[0]?.url || 'https://via.placeholder.com/400';
+  const genres = (item as any).genre || [];
+
+  const getDownloadText = () => {
+    if (item.itemType === 'Plugin') return 'Download Free Plugin';
+    if (item.itemType === 'Preset') return 'Download Free Preset';
+    return 'Download Free Pack';
+  };
 
   return (
     <div 
@@ -59,7 +66,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ item, onClose }) => {
         <div className="flex-1 min-w-0 p-6 sm:p-8 md:p-10 lg:p-12 overflow-y-auto custom-scrollbar flex flex-col bg-brand-panel-light/40">
           <div className="mb-6">
             <div className="flex flex-wrap gap-2 mb-4">
-              {(item.genre as string[] || []).map(g => (
+              {genres.map((g: string) => (
                 <span key={g} className="px-2.5 py-0.5 bg-brand-cyan/10 border border-brand-cyan/20 rounded-full text-[9px] sm:text-[10px] font-black text-brand-cyan uppercase tracking-widest">{g}</span>
               ))}
             </div>
@@ -73,7 +80,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ item, onClose }) => {
           <div className="mb-8">
             <a href={item.downloadUrl} target="_blank" rel="noopener noreferrer" className="block">
               <Button size="lg" className="w-full py-5 text-lg font-black rounded-xl sm:rounded-2xl shadow-xl shadow-brand-cyan/10 active:scale-[0.98]">
-                Download Free Pack
+                {getDownloadText()}
               </Button>
             </a>
           </div>

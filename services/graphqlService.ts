@@ -29,7 +29,7 @@ async function graphqlRequest(query: string, variables: Record<string, any> = {}
     }
 }
 
-const normalizeContent = (item: any) => {
+const normalizeContent = (item: any, type?: 'Pack' | 'Preset' | 'Plugin') => {
     if (!item) return null;
     
     // Normalize genre into a simple string array
@@ -44,6 +44,7 @@ const normalizeContent = (item: any) => {
 
     return {
         ...item,
+        itemType: type,
         coverArt: Array.isArray(item.coverArt) ? item.coverArt : (item.coverArt ? [item.coverArt] : []),
         genre: normalizedGenres
     };
@@ -65,10 +66,10 @@ export const getGenres = async (): Promise<Genre[]> => {
 };
 
 export const getSamplePacks = async (genreName?: string): Promise<SamplePack[]> => {
-    const whereClause = genreName && genreName !== 'All' ? `(where: { genre_contains_some: ["${genreName}"] })` : '';
+    const whereArg = genreName && genreName !== 'All' ? `where: { genre_contains_some: ["${genreName}"] }` : '';
     const query = `
         query GetSamplePacks {
-            samplePacks${whereClause} {
+            samplePacks(first: 1000${whereArg ? ', ' + whereArg : ''}) {
                 id name description downloadUrl featured slug
                 genre
                 coverArt { url }
@@ -77,13 +78,13 @@ export const getSamplePacks = async (genreName?: string): Promise<SamplePack[]> 
     `;
     const response = await graphqlRequest(query);
     if (!response.data?.samplePacks) return [];
-    return response.data.samplePacks.map(normalizeContent);
+    return response.data.samplePacks.map((item: any) => normalizeContent(item, 'Pack'));
 };
 
 export const getPresets = async (): Promise<Preset[]> => {
     const query = `
         query {
-            presets {
+            presets(first: 1000) {
                 id name slug description downloadUrl pluginCompatibility
                 coverArt { url }
             }
@@ -91,13 +92,13 @@ export const getPresets = async (): Promise<Preset[]> => {
     `;
     const response = await graphqlRequest(query);
     if (!response.data?.presets) return [];
-    return response.data.presets.map(normalizeContent);
+    return response.data.presets.map((item: any) => normalizeContent(item, 'Preset'));
 };
 
 export const getPlugins = async (): Promise<Plugin[]> => {
     const query = `
         query {
-            plugins {
+            plugins(first: 1000) {
                 id name slug description downloadUrl
                 coverArt { url }
             }
@@ -105,7 +106,7 @@ export const getPlugins = async (): Promise<Plugin[]> => {
     `;
     const response = await graphqlRequest(query);
     if (!response.data?.plugins) return [];
-    return response.data.plugins.map(normalizeContent);
+    return response.data.plugins.map((item: any) => normalizeContent(item, 'Plugin'));
 };
 
 export const getTutorials = async (): Promise<Tutorial[]> => {

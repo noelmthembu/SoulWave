@@ -15,6 +15,7 @@ export interface BaseContent {
   coverArt: ImageType[];
   description: string;
   downloadUrl: string;
+  itemType?: 'Pack' | 'Preset' | 'Plugin';
 }
 
 export interface SamplePack extends BaseContent {
