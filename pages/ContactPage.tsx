@@ -60,10 +60,16 @@ const SocialTile: React.FC<{ icon: React.ComponentType, name: string, url: strin
 const ContactPage: React.FC = () => {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [submissionInfo, setSubmissionInfo] = useState<{
+    demoFallback?: boolean;
+    reason?: 'placeholder' | 'smtp_error';
+    errorDetails?: string;
+  } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
+    setSubmissionInfo(null);
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
@@ -72,6 +78,15 @@ const ContactPage: React.FC = () => {
       });
       
       if (!response.ok) throw new Error('Failed to send');
+      
+      const data = await response.json();
+      if (data.demoFallback) {
+        setSubmissionInfo({
+          demoFallback: true,
+          reason: data.reason,
+          errorDetails: data.errorDetails,
+        });
+      }
       
       setStatus('success');
       setForm({ name: '', email: '', message: '' });
@@ -162,8 +177,54 @@ const ContactPage: React.FC = () => {
             </Button>
             
             {status === 'success' && (
-              <div className="p-5 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-400 text-center text-sm font-bold animate-in zoom-in-95 duration-300">
-                Message delivered! Expect a reply within 24 hours.
+              <div className="space-y-4 animate-in zoom-in-95 duration-300">
+                <div className="p-5 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-400 text-center text-sm font-bold">
+                  {submissionInfo?.demoFallback 
+                    ? "Message Handled in Simulation Mode" 
+                    : "Confirmation email sent! Please check your inbox/spam folder."}
+                </div>
+
+                {submissionInfo?.demoFallback && (
+                  <div className="p-6 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-amber-200 text-left text-sm space-y-4">
+                    <div className="flex items-center gap-2 text-amber-400 font-black uppercase text-[10px] tracking-widest">
+                      <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                      Real Email Delivery Interrupted
+                    </div>
+                    
+                    <p className="leading-relaxed">
+                      Your message was logged successfully on the server, but <strong className="text-white">could not be emailed to your inbox</strong> because SMTP credentials are not active or configured correctly.
+                    </p>
+
+                    {submissionInfo.reason === 'placeholder' ? (
+                      <div className="space-y-2">
+                        <p className="text-xs text-brand-muted leading-relaxed">
+                          <span className="text-amber-400 font-bold">Reason:</span> No SMTP password set.
+                        </p>
+                        <p className="text-xs text-brand-muted leading-relaxed">
+                          To send actual emails, configure your <code className="px-1.5 py-0.5 bg-black/40 rounded font-mono text-[10px] text-white">SMTP_USER</code> and <code className="px-1.5 py-0.5 bg-black/40 rounded font-mono text-[10px] text-white">SMTP_PASS</code> in the workspace settings.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-xs text-brand-muted leading-relaxed">
+                          <span className="text-amber-400 font-bold">Reason:</span> SMTP Password Rejected by Gmail.
+                        </p>
+                        <div className="p-3 bg-black/30 rounded-xl border border-white/5 text-[11px] font-mono text-brand-muted break-all">
+                          Error: {submissionInfo.errorDetails || '535-5.7.8 Username and Password not accepted.'}
+                        </div>
+                        <div className="p-4 bg-brand-cyan/5 border border-brand-cyan/15 rounded-xl space-y-2 text-xs text-brand-text leading-relaxed">
+                          <p className="font-bold text-brand-cyan uppercase tracking-wider text-[10px]">How to resolve Gmail SMTP Blocks:</p>
+                          <ol className="list-decimal pl-4 space-y-1.5 text-brand-muted">
+                            <li>Ensure <strong className="text-white">2-Step Verification</strong> is enabled on your Gmail account.</li>
+                            <li>Go to <strong className="text-white">Google Account Settings &rarr; Security &rarr; App Passwords</strong>.</li>
+                            <li>Generate a new 16-character App Password specifically for "Mail".</li>
+                            <li>Copy and paste that 16-character code into the <code className="px-1 py-0.5 bg-black/40 rounded font-mono text-[10px] text-brand-cyan font-bold">SMTP_PASS</code> environment variable instead of your standard login password.</li>
+                          </ol>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
             {status === 'error' && (

@@ -36,11 +36,12 @@ async function startServer() {
         smtpPass.length < 6;
 
       const mailOptions = {
-        from: email,
-        to: smtpUser,
-        subject: `New Contact Message from ${name}`,
-        text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
-        replyTo: email,
+        from: `SoundWave Samples <${smtpUser}>`,
+        to: email, // Send to the entered email address
+        cc: smtpUser !== email ? smtpUser : undefined, // CC the admin copy to the SMTP user if different
+        subject: `Contact Message Confirmation - SoundWave Samples`,
+        text: `Hi ${name},\n\nThank you for contacting SoundWave Samples!\n\nWe have received your message and will get back to you shortly.\n\nHere is a copy of your message:\n\n---\nName: ${name}\nEmail: ${email}\nMessage:\n${message}\n---\n\nBest regards,\nThe SoundWave Samples Team`,
+        replyTo: smtpUser,
       };
 
       // If no valid configuration exists, fall back immediately to console logging
@@ -52,7 +53,9 @@ async function startServer() {
         console.log('-----------------------------------');
         return res.json({ 
           success: true, 
-          message: 'Demo mode: Message logged to console successfully. Set a valid SMTP_PASS to send real emails.' 
+          message: 'Demo mode: Message logged to console successfully. Set a valid SMTP_PASS to send real emails.',
+          demoFallback: true,
+          reason: 'placeholder'
         });
       }
 
@@ -80,7 +83,9 @@ async function startServer() {
         return res.json({ 
           success: true, 
           warning: 'SMTP delivery failed. Message fallback logged safely to server console.',
-          demoFallback: true
+          demoFallback: true,
+          reason: 'smtp_error',
+          errorDetails: smtpError?.message || 'SMTP Authentication Error'
         });
       }
     } catch (error: any) {
