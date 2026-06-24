@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React from 'react';
+import { useForm, ValidationError } from '@formspree/react';
 import Button from '../components/Button';
 import Input from '../components/Input';
 
@@ -58,42 +59,7 @@ const SocialTile: React.FC<{ icon: React.ComponentType, name: string, url: strin
 );
 
 const ContactPage: React.FC = () => {
-  const [form, setForm] = useState({ name: '', email: '', message: '' });
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [submissionInfo, setSubmissionInfo] = useState<{
-    demoFallback?: boolean;
-    reason?: 'placeholder' | 'smtp_error';
-    errorDetails?: string;
-  } | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus('loading');
-    setSubmissionInfo(null);
-    try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      
-      if (!response.ok) throw new Error('Failed to send');
-      
-      const data = await response.json();
-      if (data.demoFallback) {
-        setSubmissionInfo({
-          demoFallback: true,
-          reason: data.reason,
-          errorDetails: data.errorDetails,
-        });
-      }
-      
-      setStatus('success');
-      setForm({ name: '', email: '', message: '' });
-    } catch (err) {
-      setStatus('error');
-    }
-  };
+  const [state, handleSubmit] = useForm("xknavwzp");
 
   const socialLinks = [
     { icon: Icons.TikTok, name: 'TikTok', url: 'https://tiktok.com/@soundwave', colorClass: 'hover:shadow-[0_0_20px_rgba(254,44,85,0.05)]' },
@@ -142,97 +108,84 @@ const ContactPage: React.FC = () => {
           <div className="absolute top-0 right-0 w-80 h-80 bg-brand-cyan/5 blur-[120px] rounded-full -z-10"></div>
           
           <h2 className="text-4xl font-black mb-10 text-white">Direct Message</h2>
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <Input 
-              label="Professional Name" 
-              placeholder="e.g. Young Guru" 
-              value={form.name} 
-              onChange={e => setForm({...form, name: e.target.value})}
-              required
-            />
-            <Input 
-              label="Email Address" 
-              type="email" 
-              placeholder="guru@studio.com" 
-              value={form.email} 
-              onChange={e => setForm({...form, email: e.target.value})}
-              required
-            />
-            <div>
-              <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-brand-muted mb-3 ml-1">YOUR REQUEST</label>
-              <textarea 
-                className="w-full px-5 py-5 bg-brand-dark/50 border border-white/10 rounded-2xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-brand-cyan focus:border-transparent transition min-h-[250px] resize-none leading-relaxed text-lg"
-                placeholder="Tell us about your project or what you need..."
-                value={form.message}
-                onChange={e => setForm({...form, message: e.target.value})}
-                required
-              />
+          {state.succeeded ? (
+            <div className="p-8 bg-green-500/10 border border-green-500/20 rounded-[2rem] text-center space-y-4 animate-in zoom-in-95 duration-300">
+              <div className="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto text-3xl font-bold">
+                ✓
+              </div>
+              <h3 className="text-2xl font-black text-white">Message Delivered!</h3>
+              <p className="text-brand-muted leading-relaxed text-lg">
+                Thanks for reaching out! We have successfully received your submission through Formspree and will reply within 24 hours.
+              </p>
             </div>
-            <Button 
-              type="submit" 
-              className="w-full py-6 text-xl rounded-2xl shadow-xl shadow-brand-cyan/10 hover:shadow-brand-cyan/20 transition-all transform hover:-translate-y-1 bg-brand-cyan text-brand-dark border-none" 
-              isLoading={status === 'loading'}
-            >
-              Send Message
-            </Button>
-            
-            {status === 'success' && (
-              <div className="space-y-4 animate-in zoom-in-95 duration-300">
-                <div className="p-5 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-400 text-center text-sm font-bold">
-                  {submissionInfo?.demoFallback 
-                    ? "Message Handled in Simulation Mode" 
-                    : "Confirmation email sent! Please check your inbox/spam folder."}
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div>
+                <Input 
+                  id="name"
+                  name="name"
+                  label="Professional Name" 
+                  placeholder="e.g. Young Guru" 
+                  required
+                />
+                <ValidationError 
+                  prefix="Name" 
+                  field="name"
+                  errors={state.errors}
+                  className="text-red-400 text-xs mt-2 ml-1 block"
+                />
+              </div>
+
+              <div>
+                <Input 
+                  id="email"
+                  name="email"
+                  type="email" 
+                  label="Email Address" 
+                  placeholder="guru@studio.com" 
+                  required
+                />
+                <ValidationError 
+                  prefix="Email" 
+                  field="email"
+                  errors={state.errors}
+                  className="text-red-400 text-xs mt-2 ml-1 block"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="message" className="block text-[11px] font-black uppercase tracking-[0.2em] text-brand-muted mb-3 ml-1">YOUR REQUEST</label>
+                <textarea 
+                  id="message"
+                  name="message"
+                  className="w-full px-5 py-5 bg-brand-dark/50 border border-white/10 rounded-2xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-brand-cyan focus:border-transparent transition min-h-[250px] resize-none leading-relaxed text-lg"
+                  placeholder="Tell us about your project or what you need..."
+                  required
+                />
+                <ValidationError 
+                  prefix="Message" 
+                  field="message"
+                  errors={state.errors}
+                  className="text-red-400 text-xs mt-2 ml-1 block"
+                />
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full py-6 text-xl rounded-2xl shadow-xl shadow-brand-cyan/10 hover:shadow-brand-cyan/20 transition-all transform hover:-translate-y-1 bg-brand-cyan text-brand-dark border-none" 
+                isLoading={state.submitting}
+                disabled={state.submitting}
+              >
+                Send Message
+              </Button>
+              
+              {state.errors && (
+                <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-center text-sm font-bold">
+                  Something went wrong. Please check your fields and connection.
                 </div>
-
-                {submissionInfo?.demoFallback && (
-                  <div className="p-6 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-amber-200 text-left text-sm space-y-4">
-                    <div className="flex items-center gap-2 text-amber-400 font-black uppercase text-[10px] tracking-widest">
-                      <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
-                      Real Email Delivery Interrupted
-                    </div>
-                    
-                    <p className="leading-relaxed">
-                      Your message was logged successfully on the server, but <strong className="text-white">could not be emailed to your inbox</strong> because SMTP credentials are not active or configured correctly.
-                    </p>
-
-                    {submissionInfo.reason === 'placeholder' ? (
-                      <div className="space-y-2">
-                        <p className="text-xs text-brand-muted leading-relaxed">
-                          <span className="text-amber-400 font-bold">Reason:</span> No SMTP password set.
-                        </p>
-                        <p className="text-xs text-brand-muted leading-relaxed">
-                          To send actual emails, configure your <code className="px-1.5 py-0.5 bg-black/40 rounded font-mono text-[10px] text-white">SMTP_USER</code> and <code className="px-1.5 py-0.5 bg-black/40 rounded font-mono text-[10px] text-white">SMTP_PASS</code> in the workspace settings.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <p className="text-xs text-brand-muted leading-relaxed">
-                          <span className="text-amber-400 font-bold">Reason:</span> SMTP Password Rejected by Gmail.
-                        </p>
-                        <div className="p-3 bg-black/30 rounded-xl border border-white/5 text-[11px] font-mono text-brand-muted break-all">
-                          Error: {submissionInfo.errorDetails || '535-5.7.8 Username and Password not accepted.'}
-                        </div>
-                        <div className="p-4 bg-brand-cyan/5 border border-brand-cyan/15 rounded-xl space-y-2 text-xs text-brand-text leading-relaxed">
-                          <p className="font-bold text-brand-cyan uppercase tracking-wider text-[10px]">How to resolve Gmail SMTP Blocks:</p>
-                          <ol className="list-decimal pl-4 space-y-1.5 text-brand-muted">
-                            <li>Ensure <strong className="text-white">2-Step Verification</strong> is enabled on your Gmail account.</li>
-                            <li>Go to <strong className="text-white">Google Account Settings &rarr; Security &rarr; App Passwords</strong>.</li>
-                            <li>Generate a new 16-character App Password specifically for "Mail".</li>
-                            <li>Copy and paste that 16-character code into the <code className="px-1 py-0.5 bg-black/40 rounded font-mono text-[10px] text-brand-cyan font-bold">SMTP_PASS</code> environment variable instead of your standard login password.</li>
-                          </ol>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-            {status === 'error' && (
-              <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-center text-sm font-bold">
-                Something went wrong. Please check your connection.
-              </div>
-            )}
-          </form>
+              )}
+            </form>
+          )}
         </div>
       </div>
     </div>
