@@ -64,7 +64,7 @@ const ContactPage: React.FC = () => {
   const socialLinks = [
     { icon: Icons.TikTok, name: 'TikTok', url: 'https://tiktok.com/@soundwave', colorClass: 'hover:shadow-[0_0_20px_rgba(254,44,85,0.05)]' },
     { icon: Icons.Facebook, name: 'Facebook', url: 'https://facebook.com/soundwave', colorClass: 'hover:shadow-[0_0_20px_rgba(24,119,242,0.05)]' },
-    { icon: Icons.YouTube, name: 'YouTube', url: 'https://youtube.com/soundwave', colorClass: 'hover:shadow-[0_0_20px_rgba(255,0,0,0.05)]' },
+    { icon: Icons.YouTube, name: 'YouTube', url: 'https://www.youtube.com/@soundwave-rsa', colorClass: 'hover:shadow-[0_0_20px_rgba(255,0,0,0.05)]' },
     { icon: Icons.Twitter, name: 'Twitter', url: 'https://twitter.com/soundwave', colorClass: 'hover:shadow-[0_0_20px_rgba(29,161,242,0.05)]' },
     { icon: Icons.Instagram, name: 'Instagram', url: 'https://instagram.com/soundwave', colorClass: 'hover:shadow-[0_0_20px_rgba(225,48,108,0.05)]' },
     { icon: Icons.WhatsApp, name: 'WhatsApp', url: 'https://chat.whatsapp.com/invite', colorClass: 'hover:shadow-[0_0_20px_rgba(37,211,102,0.05)]' },
