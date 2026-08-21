@@ -65,65 +65,65 @@ const ContentModal: React.FC<ContentModalProps> = ({ item, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-brand-canvas/90 p-3 sm:p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-brand-canvas/90 p-4 sm:p-6 backdrop-blur-sm"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="flex min-h-full items-center justify-center">
-        <div
-          ref={dialogRef}
-          className="relative grid w-full max-w-4xl overflow-hidden rounded-xl border border-brand-border bg-brand-surface shadow-2xl md:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.2fr)]"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={titleId}
-          aria-describedby={descriptionId}
+      <div
+        ref={dialogRef}
+        className="relative my-auto flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-brand-border bg-brand-surface shadow-2xl md:grid md:grid-cols-[minmax(16rem,0.9fr)_minmax(0,1.2fr)]"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+      >
+        <button
+          ref={closeButtonRef}
+          type="button"
+          onClick={onClose}
+          className="absolute right-3 top-3 z-20 grid h-10 w-10 place-items-center rounded-full border border-brand-border bg-brand-canvas/90 text-brand-text shadow-md transition-colors hover:bg-brand-raised"
+          aria-label="Close details"
         >
-          <button
-            ref={closeButtonRef}
-            type="button"
-            onClick={onClose}
-            className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-lg border border-brand-border bg-brand-canvas/95 text-brand-text hover:bg-brand-raised"
-            aria-label="Close details"
-          >
-            <X className="h-5 w-5" aria-hidden="true" />
-          </button>
+          <X className="h-5 w-5" aria-hidden="true" />
+        </button>
 
-          <div className="aspect-[4/3] bg-brand-raised md:aspect-auto">
-            {coverUrl && !imageFailed ? (
-              <img
-                src={coverUrl}
-                alt=""
-                className="h-full w-full object-cover"
-                onError={() => setImageFailed(true)}
-              />
-            ) : (
-              <div className="grid h-full min-h-56 place-items-center px-6 text-center text-sm text-brand-muted">Artwork unavailable</div>
-            )}
+        <div className="relative aspect-[16/10] w-full bg-brand-raised md:aspect-auto md:h-full">
+          {coverUrl && !imageFailed ? (
+            <img
+              src={coverUrl}
+              alt=""
+              className="h-full w-full object-cover"
+              onError={() => setImageFailed(true)}
+            />
+          ) : (
+            <div className="grid h-full min-h-48 place-items-center px-6 text-center text-sm text-brand-muted">Artwork unavailable</div>
+          )}
+        </div>
+
+        <div className="flex flex-1 flex-col overflow-y-auto p-5 sm:p-7">
+          <div className="pr-8 sm:pr-10">
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              <span className="rounded-md bg-brand-raised px-2.5 py-1 text-xs font-bold text-brand-cyan">{item.itemType || 'Library item'}</span>
+              {genres.map((genre) => (
+                <span key={genre} className="rounded-md border border-brand-border px-2.5 py-1 text-xs text-brand-muted">{genre}</span>
+              ))}
+            </div>
+            <h2 id={titleId} className="break-words text-xl font-bold tracking-tight text-brand-text sm:text-2xl">{item.name}</h2>
+            <p id={descriptionId} className="mt-3 break-words text-sm leading-relaxed text-brand-subtle sm:text-base">{item.description || 'No additional description is available for this item.'}</p>
           </div>
 
-          <div className="flex min-w-0 flex-col p-6 sm:p-8">
-            <div className="pr-12">
-              <div className="mb-4 flex flex-wrap gap-2">
-                <span className="rounded-md bg-brand-raised px-2 py-1 text-xs font-semibold text-brand-subtle">{item.itemType || 'Library item'}</span>
-                {genres.map((genre) => <span key={genre} className="rounded-md border border-brand-border px-2 py-1 text-xs text-brand-muted">{genre}</span>)}
-              </div>
-              <h2 id={titleId} className="break-words text-2xl font-bold tracking-[-0.03em] text-brand-text sm:text-3xl">{item.name}</h2>
-              <p id={descriptionId} className="mt-4 break-words text-sm leading-7 text-brand-subtle sm:text-base">{item.description || 'No additional description is available for this item.'}</p>
-            </div>
-
-            <div className="mt-8 border-t border-brand-border pt-5">
-              <a
-                href={item.downloadUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-brand-cyan bg-brand-cyan px-5 text-center text-sm font-semibold text-brand-ink transition-colors hover:border-brand-cyan-strong hover:bg-brand-cyan-strong"
-              >
-                {downloadText}
-              </a>
-              <p className="mt-3 text-xs leading-5 text-brand-muted">Downloads open in a new tab. Review the source before installing any software.</p>
-            </div>
+          <div className="mt-auto pt-6 border-t border-brand-border/60">
+            <a
+              href={item.downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-brand-cyan bg-brand-cyan px-5 text-center text-sm sm:text-base font-bold text-brand-ink transition-colors hover:border-brand-cyan-strong hover:bg-brand-cyan-strong shadow-sm"
+            >
+              {downloadText}
+            </a>
+            <p className="mt-2.5 text-center text-xs leading-5 text-brand-muted">Downloads open in a new tab. Verify files before opening.</p>
           </div>
         </div>
       </div>

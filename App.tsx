@@ -19,10 +19,10 @@ const RouteFallback: React.FC = () => (
 );
 
 const AppContent: React.FC = () => (
-  <div className="flex min-h-screen flex-col bg-brand-canvas text-brand-text">
+  <div className="flex min-h-screen flex-col bg-brand-canvas text-brand-text antialiased selection:bg-brand-cyan selection:text-brand-ink">
     <a className="skip-link" href="#main-content">Skip to content</a>
     <Header />
-    <main id="main-content" className="mx-auto w-full max-w-[90rem] flex-1 px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12" tabIndex={-1}>
+    <main id="main-content" className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-10" tabIndex={-1}>
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<HomePage />} />

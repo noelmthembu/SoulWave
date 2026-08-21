@@ -68,31 +68,52 @@ const PacksPage: React.FC = () => {
 
   return (
     <div>
-      <header className="border-b border-brand-border pb-7 sm:pb-9">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-cyan">Library / Packs</p>
-        <div className="mt-3 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <header className="border-b border-brand-border pb-6 sm:pb-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-cyan">Library / Packs</p>
+        <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-[-0.04em] text-brand-text sm:text-4xl">Sample packs</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-brand-muted sm:text-base">Find royalty-free loops, sounds, and MIDI built for a working session.</p>
+            <h1 className="text-3xl font-black tracking-tight text-brand-text sm:text-4xl">Sample packs</h1>
+            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-brand-muted sm:text-base">Find royalty-free loops, sounds, and stems built for a working session.</p>
           </div>
-          <form onSubmit={submitSearch} className="w-full max-w-xl" role="search">
+          <form onSubmit={submitSearch} className="w-full lg:max-w-md" role="search">
             <label className="sr-only" htmlFor="pack-search">Search sample packs</label>
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <div className="relative min-w-0 flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-muted" aria-hidden="true" />
-                <input id="pack-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search packs" className="min-h-12 w-full rounded-lg border border-brand-border bg-brand-surface py-3 pl-11 pr-3 text-base text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none" />
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-muted" aria-hidden="true" />
+                <input id="pack-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search packs..." className="h-11 w-full rounded-xl border border-brand-border bg-brand-surface py-2.5 pl-11 pr-3 text-sm sm:text-base text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none" />
               </div>
-              <Button type="submit" size="lg">Apply search</Button>
+              <Button type="submit" size="md" className="h-11 w-full sm:w-auto shrink-0">Search</Button>
             </div>
           </form>
         </div>
       </header>
 
-      <section className="py-6" aria-labelledby="genre-filter-title">
-        <h2 id="genre-filter-title" className="text-sm font-semibold text-brand-text">Filter by genre</h2>
-        <div className="mt-3 flex flex-wrap gap-2">
+      <section className="py-5" aria-labelledby="genre-filter-title">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+          <h2 id="genre-filter-title" className="text-xs font-semibold uppercase tracking-wider text-brand-muted">Filter by genre</h2>
+          {(selectedGenre !== 'All' || query) && (
+            <button
+              type="button"
+              className="text-xs font-semibold text-brand-cyan hover:underline self-start sm:self-auto"
+              onClick={() => { setQuery(''); selectGenre('All'); }}
+            >
+              Reset all filters
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
           {['All', ...genres.map((genre) => genre.name)].map((genre) => (
-            <button key={genre} type="button" onClick={() => selectGenre(genre)} aria-pressed={selectedGenre === genre} className={`min-h-10 rounded-lg border px-3 text-sm font-semibold transition-colors ${selectedGenre === genre ? 'border-brand-cyan bg-brand-cyan text-brand-ink' : 'border-brand-border bg-brand-surface text-brand-subtle hover:border-brand-cyan hover:text-brand-text'}`}>
+            <button
+              key={genre}
+              type="button"
+              onClick={() => selectGenre(genre)}
+              aria-pressed={selectedGenre === genre}
+              className={`min-h-9 rounded-lg border px-3.5 py-1 text-xs sm:text-sm font-semibold transition-colors ${
+                selectedGenre === genre
+                  ? 'border-brand-cyan bg-brand-cyan text-brand-ink'
+                  : 'border-brand-border bg-brand-surface text-brand-subtle hover:border-brand-cyan hover:text-brand-text'
+              }`}
+            >
               {genre}
             </button>
           ))}
@@ -104,6 +125,10 @@ const PacksPage: React.FC = () => {
           <span>{error}</span><Button variant="secondary" size="sm" onClick={() => void loadPacks()}>Try again</Button>
         </div>
       )}
+
+      <div className="mb-4 flex items-center justify-between text-xs text-brand-muted">
+        <span>{loading ? 'Loading...' : `${filteredPacks.length} ${filteredPacks.length === 1 ? 'pack' : 'packs'} found`}</span>
+      </div>
 
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" role="status" aria-live="polite">
@@ -117,7 +142,7 @@ const PacksPage: React.FC = () => {
       ) : (
         <section className="rounded-xl border border-dashed border-brand-border px-5 py-10 text-center" aria-labelledby="empty-packs-title">
           <h2 id="empty-packs-title" className="text-lg font-bold text-brand-text">No packs match these filters</h2>
-          <p className="mt-2 text-sm leading-6 text-brand-muted">Try another term or clear the active genre filter.</p>
+          <p className="mt-2 text-sm leading-6 text-brand-muted">Try another search term or clear the active genre filter.</p>
           <Button className="mt-5" variant="secondary" onClick={() => { setQuery(''); selectGenre('All'); }}>Clear filters</Button>
         </section>
       )}

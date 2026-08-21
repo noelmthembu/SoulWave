@@ -59,21 +59,21 @@ const SearchResultsPage: React.FC = () => {
 
   return (
     <div>
-      <header className="border-b border-brand-border pb-7 sm:pb-9">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-cyan">Library search</p>
-        <div className="mt-3 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <header className="border-b border-brand-border pb-6 sm:pb-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-cyan">Library search</p>
+        <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-[-0.04em] text-brand-text sm:text-4xl">Search results</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-brand-muted sm:text-base">{submittedQuery ? `Results for “${submittedQuery}”.` : 'Search packs, presets, and production tools from one place.'}</p>
+            <h1 className="text-3xl font-black tracking-tight text-brand-text sm:text-4xl">Search results</h1>
+            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-brand-muted sm:text-base">{submittedQuery ? `Showing results matching “${submittedQuery}”.` : 'Search packs, presets, and production tools from one place.'}</p>
           </div>
-          <form onSubmit={submitSearch} className="w-full max-w-xl" role="search">
+          <form onSubmit={submitSearch} className="w-full lg:max-w-md" role="search">
             <label className="sr-only" htmlFor="all-search">Search SoundWave</label>
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <div className="relative min-w-0 flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-muted" aria-hidden="true" />
-                <input id="all-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search everything" className="min-h-12 w-full rounded-lg border border-brand-border bg-brand-surface py-3 pl-11 pr-3 text-base text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none" />
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-muted" aria-hidden="true" />
+                <input id="all-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search everything..." className="h-11 w-full rounded-xl border border-brand-border bg-brand-surface py-2.5 pl-11 pr-3 text-sm sm:text-base text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none" />
               </div>
-              <Button type="submit" size="lg">Search</Button>
+              <Button type="submit" size="md" className="h-11 w-full sm:w-auto shrink-0">Search</Button>
             </div>
           </form>
         </div>
@@ -85,10 +85,10 @@ const SearchResultsPage: React.FC = () => {
         </div>
       )}
 
-      <section className="pt-7" aria-labelledby="search-results-title">
-        <div className="mb-5 flex items-baseline justify-between gap-4">
-          <h2 id="search-results-title" className="text-sm font-semibold text-brand-text">{loading ? 'Searching the library' : `${filteredResults.length} ${filteredResults.length === 1 ? 'result' : 'results'}`}</h2>
-          {submittedQuery && <button type="button" className="min-h-10 text-sm font-semibold text-brand-cyan hover:text-brand-text" onClick={() => setSearchParams({}, { replace: true })}>Clear search</button>}
+      <section className="pt-6" aria-labelledby="search-results-title">
+        <div className="mb-4 flex items-center justify-between text-xs text-brand-muted">
+          <h2 id="search-results-title" className="font-normal">{loading ? 'Searching the library...' : `${filteredResults.length} ${filteredResults.length === 1 ? 'result' : 'results'} found`}</h2>
+          {submittedQuery && <button type="button" className="font-semibold text-brand-cyan hover:underline" onClick={() => setSearchParams({}, { replace: true })}>Clear search</button>}
         </div>
 
         {loading ? (
@@ -104,7 +104,7 @@ const SearchResultsPage: React.FC = () => {
           <div className="rounded-xl border border-dashed border-brand-border px-5 py-10 text-center">
             <h2 className="text-lg font-bold text-brand-text">No results found</h2>
             <p className="mt-2 text-sm text-brand-muted">Try another genre, sound type, or product name.</p>
-            {submittedQuery && <Button className="mt-5" variant="secondary" onClick={() => setSearchParams({}, { replace: true })}>Clear search</Button>}
+            {submittedQuery && <Button className="mt-4" variant="secondary" size="sm" onClick={() => setSearchParams({}, { replace: true })}>Clear search</Button>}
           </div>
         )}
       </section>

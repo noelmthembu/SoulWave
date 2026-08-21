@@ -20,14 +20,14 @@ interface CatalogSectionProps {
 }
 
 const CatalogSection: React.FC<CatalogSectionProps> = ({ title, description, to, typeLabel, items, loading, onViewDetails }) => (
-  <section aria-labelledby={`${typeLabel.toLowerCase()}-heading`} className="border-t border-brand-border pt-8 sm:pt-10">
+  <section aria-labelledby={`${typeLabel.toLowerCase()}-heading`} className="pt-8 sm:pt-10 border-t border-brand-border first:border-t-0 first:pt-2 sm:first:pt-4">
     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-cyan">Library</p>
-        <h2 id={`${typeLabel.toLowerCase()}-heading`} className="mt-2 text-2xl font-bold tracking-[-0.03em] text-brand-text sm:text-3xl">{title}</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-brand-muted">{description}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-cyan">Library</p>
+        <h2 id={`${typeLabel.toLowerCase()}-heading`} className="mt-1.5 text-2xl font-bold tracking-tight text-brand-text sm:text-3xl">{title}</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-brand-muted">{description}</p>
       </div>
-      <Link to={to} className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-brand-cyan hover:text-brand-text sm:self-auto">
+      <Link to={to} className="inline-flex min-h-10 items-center gap-1.5 self-start text-sm font-semibold text-brand-cyan hover:text-brand-text sm:self-auto shrink-0 transition-colors">
         Explore all <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </Link>
     </div>
@@ -42,7 +42,7 @@ const CatalogSection: React.FC<CatalogSectionProps> = ({ title, description, to,
         {items.map((item) => <ContentCard key={item.id} item={item} typeLabel={typeLabel} onViewDetails={() => onViewDetails(item)} />)}
       </div>
     ) : (
-      <div className="rounded-xl border border-dashed border-brand-border px-5 py-8 text-sm text-brand-muted">No {title.toLowerCase()} are available right now. Check back later or explore another category.</div>
+      <div className="rounded-xl border border-dashed border-brand-border px-5 py-8 text-center text-sm text-brand-muted">No {title.toLowerCase()} are available right now. Check back later or explore another category.</div>
     )}
   </section>
 );
@@ -91,58 +91,59 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="pb-8">
-      <section className="border-b border-brand-border pb-10 sm:pb-14" aria-labelledby="home-title">
+      <section className="border-b border-brand-border pb-8 sm:pb-12" aria-labelledby="home-title">
         <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-cyan">Sound library for producers</p>
-          <h1 id="home-title" className="mt-4 max-w-2xl text-4xl font-bold tracking-[-0.05em] text-brand-text sm:text-5xl lg:text-6xl">Find the sound that fits this session.</h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-brand-subtle sm:text-lg">Browse free sample packs, presets, and production tools without losing your place in the work.</p>
+          <h1 id="home-title" className="mt-3 max-w-2xl text-3xl font-black tracking-tight text-brand-text sm:text-4xl md:text-5xl lg:text-6xl">Find the sound that fits this session.</h1>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-brand-subtle sm:text-lg">Browse free sample packs, presets, and production tools without losing your place in the work.</p>
         </div>
 
-        <form onSubmit={handleSearch} className="mt-8 max-w-2xl" role="search">
-          <label htmlFor="hero-search" className="text-sm font-semibold text-brand-text">Search the library</label>
-          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+        <form onSubmit={handleSearch} className="mt-7 max-w-xl" role="search">
+          <label htmlFor="hero-search" className="sr-only">Search the library</label>
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
             <div className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-muted" aria-hidden="true" />
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-muted" aria-hidden="true" />
               <input
                 id="hero-search"
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Try “Amapiano keys” or “drum kit”"
-                className="min-h-12 w-full rounded-lg border border-brand-border bg-brand-surface py-3 pl-11 pr-3 text-base text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none"
+                placeholder="Search loops, synths, Amapiano..."
+                className="h-12 w-full rounded-xl border border-brand-border bg-brand-surface py-3 pl-11 pr-4 text-base text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none"
               />
             </div>
-            <Button type="submit" size="lg" className="w-full sm:w-auto">Search library</Button>
+            <Button type="submit" size="lg" className="h-12 w-full sm:w-auto shrink-0">Search library</Button>
           </div>
         </form>
 
-        <nav className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm" aria-label="Browse categories">
-          <Link to="/packs" className="font-semibold text-brand-cyan hover:text-brand-text">Browse packs</Link>
-          <Link to="/presets" className="font-semibold text-brand-cyan hover:text-brand-text">Explore presets</Link>
-          <Link to="/plugins" className="font-semibold text-brand-cyan hover:text-brand-text">Find tools</Link>
+        <nav className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm" aria-label="Browse categories">
+          <span className="text-xs text-brand-muted font-medium uppercase tracking-wider">Quick links:</span>
+          <Link to="/packs" className="font-semibold text-brand-cyan hover:underline">Sample packs</Link>
+          <Link to="/presets" className="font-semibold text-brand-cyan hover:underline">Presets</Link>
+          <Link to="/plugins" className="font-semibold text-brand-cyan hover:underline">Tools & VSTs</Link>
         </nav>
       </section>
 
       {error && (
-        <div className="mt-8 flex flex-col gap-3 rounded-xl border border-red-300/40 bg-red-950/30 p-4 text-sm text-red-100 sm:flex-row sm:items-center sm:justify-between" role="alert">
+        <div className="mt-6 flex flex-col gap-3 rounded-xl border border-red-300/40 bg-red-950/30 p-4 text-sm text-red-100 sm:flex-row sm:items-center sm:justify-between" role="alert">
           <span>{error}</span>
           <Button variant="secondary" size="sm" onClick={() => void loadCatalog()}>Try again</Button>
         </div>
       )}
 
-      <div className="space-y-10 sm:space-y-14">
+      <div className="space-y-8 sm:space-y-12">
         <CatalogSection title="Featured sample packs" description="A short, practical selection of sound sources for your current project." to="/packs" typeLabel="Pack" items={packs} loading={loading} onViewDetails={setSelectedItem} />
         <CatalogSection title="Latest presets" description="Start with settings designed to give synth and instrument ideas a clear direction." to="/presets" typeLabel="Preset" items={presets} loading={loading} onViewDetails={setSelectedItem} />
         <CatalogSection title="Production tools" description="Browse the software and tools listed by the SoundWave community." to="/plugins" typeLabel="Plugin" items={plugins} loading={loading} onViewDetails={setSelectedItem} />
       </div>
 
-      <section className="mt-10 border-t border-brand-border pt-8 sm:mt-14 sm:pt-10" aria-labelledby="genres-heading">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-cyan">Filter</p>
-        <h2 id="genres-heading" className="mt-2 text-2xl font-bold tracking-[-0.03em] text-brand-text">Browse by genre</h2>
-        <p className="mt-2 text-sm leading-6 text-brand-muted">Choose a genre to open matching sample packs.</p>
-        <div className="mt-5 flex flex-wrap gap-2">
+      <section className="mt-10 border-t border-brand-border pt-8 sm:mt-12 sm:pt-10" aria-labelledby="genres-heading">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-cyan">Filter</p>
+        <h2 id="genres-heading" className="mt-1.5 text-2xl font-bold tracking-tight text-brand-text">Browse by genre</h2>
+        <p className="mt-1.5 text-sm leading-relaxed text-brand-muted">Choose a genre to open matching sample packs.</p>
+        <div className="mt-4 flex flex-wrap gap-2">
           {genres.length > 0 ? genres.map((genre) => (
-            <Link key={genre.id} to={`/packs?genre=${encodeURIComponent(genre.name)}`} className="inline-flex min-h-10 items-center rounded-lg border border-brand-border bg-brand-surface px-3 text-sm text-brand-subtle hover:border-brand-cyan hover:text-brand-text">
+            <Link key={genre.id} to={`/packs?genre=${encodeURIComponent(genre.name)}`} className="inline-flex min-h-10 items-center rounded-lg border border-brand-border bg-brand-surface px-3.5 py-1.5 text-sm font-medium text-brand-subtle transition-colors hover:border-brand-cyan hover:text-brand-text hover:bg-brand-raised">
               {genre.name}
             </Link>
           )) : <p className="text-sm text-brand-muted">Genres will appear when the library is available.</p>}

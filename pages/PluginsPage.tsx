@@ -48,21 +48,21 @@ const PluginsPage: React.FC = () => {
 
   return (
     <div>
-      <header className="border-b border-brand-border pb-7 sm:pb-9">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-cyan">Library / Tools</p>
-        <div className="mt-3 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <header className="border-b border-brand-border pb-6 sm:pb-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-cyan">Library / Tools</p>
+        <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-[-0.04em] text-brand-text sm:text-4xl">Production tools</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-brand-muted sm:text-base">Review the tools listed for your DAW and production workflow.</p>
+            <h1 className="text-3xl font-black tracking-tight text-brand-text sm:text-4xl">Production tools</h1>
+            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-brand-muted sm:text-base">Review tools and plugins listed for your DAW and production workflow.</p>
           </div>
-          <form onSubmit={submitSearch} className="w-full max-w-xl" role="search">
+          <form onSubmit={submitSearch} className="w-full lg:max-w-md" role="search">
             <label className="sr-only" htmlFor="plugin-search">Search production tools</label>
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <div className="relative min-w-0 flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-muted" aria-hidden="true" />
-                <input id="plugin-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tools" className="min-h-12 w-full rounded-lg border border-brand-border bg-brand-surface py-3 pl-11 pr-3 text-base text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none" />
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-muted" aria-hidden="true" />
+                <input id="plugin-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tools and VSTs..." className="h-11 w-full rounded-xl border border-brand-border bg-brand-surface py-2.5 pl-11 pr-3 text-sm sm:text-base text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none" />
               </div>
-              <Button type="submit" size="lg">Apply search</Button>
+              <Button type="submit" size="md" className="h-11 w-full sm:w-auto shrink-0">Search</Button>
             </div>
           </form>
         </div>
@@ -74,10 +74,10 @@ const PluginsPage: React.FC = () => {
         </div>
       )}
 
-      <section className="pt-7" aria-labelledby="plugin-results-title">
-        <div className="mb-5 flex items-baseline justify-between gap-4">
-          <h2 id="plugin-results-title" className="text-sm font-semibold text-brand-text">{loading ? 'Loading tools' : `${filteredPlugins.length} ${filteredPlugins.length === 1 ? 'tool' : 'tools'} available`}</h2>
-          {query && <button type="button" className="min-h-10 text-sm font-semibold text-brand-cyan hover:text-brand-text" onClick={() => { setQuery(''); setSearchParams({}, { replace: true }); }}>Clear search</button>}
+      <section className="pt-6" aria-labelledby="plugin-results-title">
+        <div className="mb-4 flex items-center justify-between text-xs text-brand-muted">
+          <h2 id="plugin-results-title" className="font-normal">{loading ? 'Loading tools...' : `${filteredPlugins.length} ${filteredPlugins.length === 1 ? 'tool' : 'tools'} available`}</h2>
+          {query && <button type="button" className="font-semibold text-brand-cyan hover:underline" onClick={() => { setQuery(''); setSearchParams({}, { replace: true }); }}>Clear search</button>}
         </div>
 
         {loading ? (
@@ -93,6 +93,7 @@ const PluginsPage: React.FC = () => {
           <div className="rounded-xl border border-dashed border-brand-border px-5 py-10 text-center">
             <h2 className="text-lg font-bold text-brand-text">No tools match that search</h2>
             <p className="mt-2 text-sm text-brand-muted">Try a product name, manufacturer, or a different keyword.</p>
+            {query && <Button className="mt-4" variant="secondary" size="sm" onClick={() => { setQuery(''); setSearchParams({}, { replace: true }); }}>Clear search</Button>}
           </div>
         )}
       </section>

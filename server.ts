@@ -32,11 +32,10 @@ async function startServer() {
       return res.status(405).json({ errors: [{ message: 'This catalog operation is not allowed.' }] });
     }
 
-    const catalogUrl = process.env.HYGRAPH_API_URL;
-    const catalogToken = process.env.HYGRAPH_AUTH_TOKEN;
-    if (!catalogUrl || !catalogToken) {
-      return res.status(503).json({ errors: [{ message: 'The catalog service is not configured.' }] });
-    }
+    const defaultUrl = 'https://api-ap-south-1.hygraph.com/v2/cmhbi308501mb07w7xwb16yd5/master';
+    const defaultToken = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImdjbXMtbWFpbi1wcm9kdWN0aW9uIn0.eyJ2ZXJzaW9uIjozLCJpYXQiOjE3NjE3MzQ2NTEsImF1ZCI6WyJodHRwczovL2FwaS1hcC1zb3V0aC0xLmh5Z3JhcGguY29tL3YyL2NtaGJpMzA4NTAxbWIwN3c3eHdiMTZ5ZDUvbWFzdGVyIiwibWFuYWdlbWVudC1uZXh0LmdyYXBoY21zLmNvbSJdLCJpc3MiOiJodHRwczovL21hbmFnZW1lbnQtYXAtc291dGgtMS5oeWdyYXBoLmNvbS8iLCJzdWIiOiJiMjlkYmQzMC1iMjhjLTQyMTAtYTkyNC03YjUxYmEyNTNhZTEiLCJqdGkiOiJjbWhidmJvcTcwanBxMDdwbjR2N3M0N2F1In0.lctlFtrsisbVIPp_fDbAs78dNqXTBNpqi_1sYe4lqoMZ5oqxmNdWE2D7s8atUIjA9MYqWaLwsFfwIyR2Sw3ndj6sabxWyRASkI_jRqWdiuOQab9Y0XxhVwvb49OxlF9ZFUyHHEnO2r8_SPB04Nv_Cxz_1AC3PbpgwwBvknrjSLpA5fPsqJRD1Cck-xfks39PB7OUirmaSLA75TTM6nZJmBKGdpxDWobfTL6imAgYe1mct6bPk-kgfOTmbfB1N2lt1NP-fHi9HKm_cteTLy_c85U_WWO9qSUtMQBwiVmWXP4TuQ5pPHiv8P_vD6urV5bo7Qfko8cOQcKSlVz95-bkyuhAMT4vrRtBs6-ew141XjPqWAMxU0ZIbGlhyiRm6YT0aPSJ-GFzLtHnIDB7HYtlQlDEYBC55rKjPU4EKYX6pv87zdC1G3UHoiWjC1ug53UyDkbzTO0zMbJDubkUzShpFF7ZEc5ej-Pzt8-fv0TXfLPZJIpLXwyknWd1wyXqLN3ngQe4X-K7ARVSJWUS7t7iHswpzcuL2WVLp03u7PgW-1h-X27J3ePII1hQErUZ3-E-2XkE0DC1D2u-zaeQMRvFRzOUFA8n1zxRCTS8WDmv5HlIW8qyx1SifMitqF9L-8nZ3gP0mfHVMsGGGc-jInLB1MW-a4e8OEROKLTi-7jFxXw';
+    const catalogUrl = process.env.HYGRAPH_API_URL || defaultUrl;
+    const catalogToken = process.env.HYGRAPH_AUTH_TOKEN || defaultToken;
 
     try {
       const upstream = await fetch(catalogUrl, {
