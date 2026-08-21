@@ -1,114 +1,115 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { getSamplePacks, getPresets, getPlugins } from '../services/graphqlService';
-import { SamplePack, Preset, Plugin } from '../types';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Search } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import Button from '../components/Button';
 import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
+import { getPlugins, getPresets, getSamplePacks } from '../services/graphqlService';
+import { Plugin, Preset, SamplePack } from '../types';
 
-type SearchResult = (SamplePack | Preset | Plugin) & { type: 'pack' | 'preset' | 'plugin' };
+type SearchResult = (SamplePack | Preset | Plugin) & { resultType: 'Pack' | 'Preset' | 'Tool' };
 
 const SearchResultsPage: React.FC = () => {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const query = searchParams.get('q') || '';
-  
+  const submittedQuery = searchParams.get('q') || '';
+  const [query, setQuery] = useState(submittedQuery);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedItem, setSelectedItem] = useState<SearchResult | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [packs, presets, plugins] = await Promise.all([
-          getSamplePacks(),
-          getPresets(),
-          getPlugins()
-        ]);
-
-        const allResults: SearchResult[] = [
-          ...packs.map(p => ({ ...p, type: 'pack' as const })),
-          ...presets.map(p => ({ ...p, type: 'preset' as const })),
-          ...plugins.map(p => ({ ...p, type: 'plugin' as const }))
-        ];
-
-        setResults(allResults);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+  const loadResults = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [packs, presets, plugins] = await Promise.all([getSamplePacks(), getPresets(), getPlugins()]);
+      setResults([
+        ...packs.map((item) => ({ ...item, resultType: 'Pack' as const })),
+        ...presets.map((item) => ({ ...item, resultType: 'Preset' as const })),
+        ...plugins.map((item) => ({ ...item, resultType: 'Tool' as const })),
+      ]);
+    } catch {
+      setError('Search is temporarily unavailable. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    void loadResults();
+  }, [loadResults]);
+
+  useEffect(() => {
+    setQuery(submittedQuery);
+  }, [submittedQuery]);
+
   const filteredResults = useMemo(() => {
-    const searchLower = query.toLowerCase().trim();
-    if (!searchLower) return results;
-    
-    return results.filter(item => 
-      item.name.toLowerCase().includes(searchLower) || 
-      (item.description && item.description.toLowerCase().includes(searchLower)) ||
-      (item.genre && Array.isArray(item.genre) && item.genre.some(g => g.toLowerCase().includes(searchLower))) ||
-      item.type.toLowerCase().includes(searchLower)
-    );
-  }, [results, query]);
+    const normalizedQuery = submittedQuery.trim().toLowerCase();
+    if (!normalizedQuery) return results;
+    return results.filter((item) => {
+      const values = [item.name, item.description, item.resultType, ...(('genre' in item && item.genre) || [])].filter(Boolean);
+      return values.some((value) => value.toLowerCase().includes(normalizedQuery));
+    });
+  }, [results, submittedQuery]);
+
+  const submitSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    setSearchParams(query.trim() ? { q: query.trim() } : {}, { replace: true });
+  };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col md:flex-row gap-6 justify-between items-end">
-        <div>
-          <h1 className="text-4xl font-black mb-2 tracking-tight">Search Results</h1>
-          <p className="text-brand-muted">
-            {query ? `Showing results for "${query}"` : 'Browse all content'}
-          </p>
+    <div>
+      <header className="border-b border-brand-border pb-7 sm:pb-9">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-cyan">Library search</p>
+        <div className="mt-3 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-[-0.04em] text-brand-text sm:text-4xl">Search results</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-brand-muted sm:text-base">{submittedQuery ? `Results for “${submittedQuery}”.` : 'Search packs, presets, and production tools from one place.'}</p>
+          </div>
+          <form onSubmit={submitSearch} className="w-full max-w-xl" role="search">
+            <label className="sr-only" htmlFor="all-search">Search SoundWave</label>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="relative min-w-0 flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-muted" aria-hidden="true" />
+                <input id="all-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search everything" className="min-h-12 w-full rounded-lg border border-brand-border bg-brand-surface py-3 pl-11 pr-3 text-base text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none" />
+              </div>
+              <Button type="submit" size="lg">Search</Button>
+            </div>
+          </form>
         </div>
-        
-        <div className="w-full md:w-96">
-          <input 
-            type="text"
-            placeholder="Search everything..."
-            className="w-full px-5 py-3 bg-brand-panel border border-white/10 rounded-2xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 transition-all shadow-lg"
-            value={query}
-            onChange={(e) => setSearchParams(e.target.value ? { q: e.target.value } : {}, { replace: true })}
-          />
-        </div>
-      </div>
+      </header>
 
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[1,2,3,4,5,6].map(i => <div key={i} className="aspect-square bg-white/5 animate-pulse rounded-[2rem]"></div>)}
-        </div>
-      ) : filteredResults.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {filteredResults.map(item => (
-            <ContentCard 
-              key={`${item.type}-${item.id}`} 
-              item={item} 
-              typeLabel={item.type.charAt(0).toUpperCase() + item.type.slice(1)}
-              onViewDetails={() => setSelectedItem(item)} 
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-20 bg-brand-panel/30 rounded-[3rem] border border-dashed border-white/10">
-          <p className="text-xl font-bold text-brand-muted mb-2">No results found for "{query}"</p>
-          <button 
-            onClick={() => setSearchParams({})}
-            className="text-brand-cyan hover:underline font-black uppercase text-xs tracking-widest"
-          >
-            Clear search
-          </button>
+      {error && (
+        <div className="my-6 flex flex-col gap-3 rounded-xl border border-red-300/40 bg-red-950/30 p-4 text-sm text-red-100 sm:flex-row sm:items-center sm:justify-between" role="alert">
+          <span>{error}</span><Button variant="secondary" size="sm" onClick={() => void loadResults()}>Try again</Button>
         </div>
       )}
 
-      {selectedItem && (
-        <ContentModal 
-          item={selectedItem as any} 
-          onClose={() => setSelectedItem(null)} 
-        />
-      )}
+      <section className="pt-7" aria-labelledby="search-results-title">
+        <div className="mb-5 flex items-baseline justify-between gap-4">
+          <h2 id="search-results-title" className="text-sm font-semibold text-brand-text">{loading ? 'Searching the library' : `${filteredResults.length} ${filteredResults.length === 1 ? 'result' : 'results'}`}</h2>
+          {submittedQuery && <button type="button" className="min-h-10 text-sm font-semibold text-brand-cyan hover:text-brand-text" onClick={() => setSearchParams({}, { replace: true })}>Clear search</button>}
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" role="status" aria-live="polite">
+            {Array.from({ length: 8 }, (_, index) => <div key={index} className="aspect-[4/5] rounded-xl border border-brand-border bg-brand-surface animate-pulse" />)}
+            <span className="sr-only">Searching the library…</span>
+          </div>
+        ) : filteredResults.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredResults.map((item) => <ContentCard key={`${item.resultType}-${item.id}`} item={item} typeLabel={item.resultType} onViewDetails={() => setSelectedItem(item)} />)}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-brand-border px-5 py-10 text-center">
+            <h2 className="text-lg font-bold text-brand-text">No results found</h2>
+            <p className="mt-2 text-sm text-brand-muted">Try another genre, sound type, or product name.</p>
+            {submittedQuery && <Button className="mt-5" variant="secondary" onClick={() => setSearchParams({}, { replace: true })}>Clear search</Button>}
+          </div>
+        )}
+      </section>
+
+      {selectedItem && <ContentModal item={selectedItem} onClose={() => setSelectedItem(null)} />}
     </div>
   );
 };

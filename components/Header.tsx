@@ -1,88 +1,117 @@
-import React, { useState } from 'react';
-import { NavLink, Link, useNavigate } from 'react-router-dom';
-import { Piano } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Menu, Search, X } from 'lucide-react';
 import Button from './Button';
+
+const navigation = [
+  { to: '/packs', label: 'Packs' },
+  { to: '/presets', label: 'Presets' },
+  { to: '/plugins', label: 'Plugins' },
+  { to: '/contact', label: 'Contact' },
+];
 
 const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMenuOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, []);
+
+  const handleSearch = (event: React.FormEvent) => {
+    event.preventDefault();
     const query = searchQuery.trim();
-    if (query) {
-      navigate(`/search?q=${encodeURIComponent(query)}`);
-      setSearchQuery('');
-    }
+    if (!query) return;
+    navigate(`/search?q=${encodeURIComponent(query)}`);
+    setSearchQuery('');
+    setIsMenuOpen(false);
   };
 
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
-    `px-3 py-2 rounded-full text-sm font-medium transition-all ${
+    `inline-flex min-h-11 items-center border-b-2 px-1 text-sm font-semibold transition-colors motion-reduce:transition-none ${
       isActive
-        ? 'text-brand-cyan bg-white/5'
-        : 'text-brand-muted hover:text-white hover:bg-white/5'
+        ? 'border-brand-cyan text-brand-text'
+        : 'border-transparent text-brand-muted hover:border-brand-border hover:text-brand-text'
     }`;
 
   return (
-    <header className="bg-brand-dark/80 backdrop-blur-md sticky top-0 z-50 border-b border-white/5">
-      <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-4">
-          <div className="flex items-center gap-6 lg:gap-8 shrink-0">
-            <Link to="/" className="flex items-center group">
-              <span className="text-2xl font-black tracking-tighter text-white flex items-center">
-                SOUND<span className="text-brand-cyan group-hover:text-cyan-300 transition-colors">WAVE</span>
-                <Piano className="ml-2 w-6 h-6 text-brand-cyan" />
-              </span>
-            </Link>
-            
-            <div className="hidden xl:flex items-center gap-1">
-              <NavLink to="/packs" className={navLinkClasses}>Sample Packs</NavLink>
-              <NavLink to="/presets" className={navLinkClasses}>Presets</NavLink>
-              <NavLink to="/plugins" className={navLinkClasses}>Plugins</NavLink>
-              <NavLink to="/contact" className={navLinkClasses}>Contact</NavLink>
-            </div>
+    <header className="sticky top-0 z-40 border-b border-brand-border bg-brand-canvas/95">
+      <nav className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8" aria-label="Primary navigation">
+        <div className="flex min-h-16 items-center justify-between gap-3">
+          <Link to="/" className="shrink-0 text-lg font-extrabold tracking-[-0.04em] text-brand-text sm:text-xl" aria-label="SoundWave home">
+            SOUND<span className="text-brand-cyan">WAVE</span>
+          </Link>
+
+          <div className="hidden items-center gap-5 lg:flex">
+            {navigation.map((item) => (
+              <NavLink key={item.to} to={item.to} className={navLinkClasses}>
+                {item.label}
+              </NavLink>
+            ))}
           </div>
 
-          {/* Global Search Bar */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-md hidden md:flex relative group">
-            <input 
-              type="text"
-              placeholder="Search sounds, presets..."
-              className="w-full bg-white/5 border border-white/10 rounded-full py-2 pl-5 pr-12 text-sm text-white placeholder-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 focus:bg-white/10 transition-all"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button 
-              type="submit"
-              className="absolute right-1 top-1 bottom-1 px-3 bg-brand-cyan hover:bg-cyan-400 text-brand-dark rounded-full transition-colors flex items-center justify-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
-              </svg>
-            </button>
+          <form onSubmit={handleSearch} className="hidden w-full max-w-xs lg:block">
+            <label className="sr-only" htmlFor="site-search">Search SoundWave</label>
+            <div className="relative">
+              <input
+                id="site-search"
+                type="search"
+                placeholder="Search packs and tools"
+                className="min-h-11 w-full rounded-lg border border-brand-border bg-brand-surface py-2 pl-3 pr-11 text-sm text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+              />
+              <button type="submit" className="absolute right-1 top-1 grid h-9 w-9 place-items-center rounded-md text-brand-muted hover:bg-brand-raised hover:text-brand-text" aria-label="Run search">
+                <Search className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
           </form>
 
-          <div className="flex items-center gap-4 lg:gap-6 shrink-0">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/5 rounded-full">
-               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-cyan opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-cyan"></span>
-              </span>
-              <span className="text-[10px] font-black text-brand-cyan uppercase tracking-widest">Live Sync</span>
-            </div>
-            
-            <a 
-              href="https://app.hygraph.com" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="hidden lg:block"
-            >
-              <Button size="sm" variant="secondary" className="border border-white/10 rounded-full">
-                Manage
-              </Button>
-            </a>
-          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            className="min-h-11 shrink-0 px-3 lg:hidden"
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-navigation"
+            onClick={() => setIsMenuOpen((open) => !open)}
+          >
+            {isMenuOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
+            <span className="sr-only">{isMenuOpen ? 'Close navigation' : 'Open navigation'}</span>
+          </Button>
         </div>
+
+        {isMenuOpen && (
+          <div id="mobile-navigation" className="border-t border-brand-border py-3 lg:hidden">
+            <form onSubmit={handleSearch} className="mb-3">
+              <label className="sr-only" htmlFor="mobile-site-search">Search SoundWave</label>
+              <div className="relative">
+                <input
+                  id="mobile-site-search"
+                  type="search"
+                  placeholder="Search packs and tools"
+                  className="min-h-12 w-full rounded-lg border border-brand-border bg-brand-surface py-3 pl-3 pr-12 text-base text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                />
+                <button type="submit" className="absolute right-1 top-1 grid h-10 w-10 place-items-center rounded-md text-brand-muted hover:bg-brand-raised hover:text-brand-text" aria-label="Run search">
+                  <Search className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
+            </form>
+            <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
+              {navigation.map((item) => (
+                <NavLink key={item.to} to={item.to} className={navLinkClasses} onClick={() => setIsMenuOpen(false)}>
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        )}
       </nav>
     </header>
   );

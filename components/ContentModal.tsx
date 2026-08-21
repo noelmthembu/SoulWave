@@ -1,90 +1,130 @@
-import React, { useEffect } from 'react';
-import { SamplePack, Preset, Plugin, BaseContent } from '../types';
-import Button from './Button';
-import { CloseIcon } from '../constants';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import { BaseContent, Plugin, Preset, SamplePack } from '../types';
+import { X } from 'lucide-react';
 
 interface ContentModalProps {
   item: BaseContent | SamplePack | Preset | Plugin;
   onClose: () => void;
 }
 
+const focusableSelector = 'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 const ContentModal: React.FC<ContentModalProps> = ({ item, onClose }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocusedElement = useRef<HTMLElement | null>(null);
+  const [imageFailed, setImageFailed] = useState(false);
+  const titleId = useId();
+  const descriptionId = useId();
+  const coverUrl = item.coverArt?.[0]?.url;
+  const genres = 'genre' in item && Array.isArray(item.genre) ? item.genre : [];
+
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', handleEsc);
+    previouslyFocusedElement.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'unset';
+    requestAnimationFrame(() => closeButtonRef.current?.focus());
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !dialogRef.current) return;
+
+      const focusableElements: HTMLElement[] = [...dialogRef.current.querySelectorAll<HTMLElement>(focusableSelector)];
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        return;
+      }
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
     };
-  }, [item.slug, onClose]);
 
-  const coverUrl = item.coverArt?.[0]?.url || 'https://via.placeholder.com/400';
-  const genres = (item as any).genre || [];
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocusedElement.current?.focus();
+    };
+  }, [onClose]);
 
-  const getDownloadText = () => {
-    if (item.itemType === 'Plugin') return 'Download Free Plugin';
-    if (item.itemType === 'Preset') return 'Download Free Preset';
-    return 'Download Free Pack';
-  };
+  const downloadText = item.itemType === 'Plugin'
+    ? 'Open plugin download'
+    : item.itemType === 'Preset'
+      ? 'Open preset download'
+      : 'Open pack download';
 
   return (
-    <div 
-      className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-6 bg-brand-dark/95 backdrop-blur-xl animate-in fade-in duration-300"
-      onClick={onClose}
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto bg-brand-canvas/90 p-3 sm:p-6"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
     >
-      <div 
-        className="relative bg-brand-panel-light border border-white/10 w-full max-w-5xl max-h-[92vh] rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 duration-300"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Close Button - Always visible */}
-        <button 
-          onClick={onClose} 
-          className="absolute top-4 right-4 p-2 bg-brand-dark/60 hover:bg-white/10 backdrop-blur-md rounded-full text-white transition-all z-50 border border-white/10 shadow-lg"
+      <div className="flex min-h-full items-center justify-center">
+        <div
+          ref={dialogRef}
+          className="relative grid w-full max-w-4xl overflow-hidden rounded-xl border border-brand-border bg-brand-surface shadow-2xl md:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.2fr)]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          aria-describedby={descriptionId}
         >
-          <CloseIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-        </button>
+          <button
+            ref={closeButtonRef}
+            type="button"
+            onClick={onClose}
+            className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-lg border border-brand-border bg-brand-canvas/95 text-brand-text hover:bg-brand-raised"
+            aria-label="Close details"
+          >
+            <X className="h-5 w-5" aria-hidden="true" />
+          </button>
 
-        {/* Image Section - Strict containment logic */}
-        <div className="w-full md:w-5/12 lg:w-4/12 flex items-center justify-center bg-black/40 relative overflow-hidden shrink-0 h-[35vh] md:h-auto">
-          {/* Ambient Glow Backdrop (derived from image) */}
-          <div 
-            className="absolute inset-0 opacity-20 blur-3xl scale-150 pointer-events-none"
-            style={{ backgroundImage: `url(${coverUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
-          />
-          
-          <div className="relative z-10 w-full h-full p-4 sm:p-8 flex items-center justify-center">
-            <img 
-              src={coverUrl} 
-              alt={item.name} 
-              className="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-2xl transition-all duration-700" 
-            />
+          <div className="aspect-[4/3] bg-brand-raised md:aspect-auto">
+            {coverUrl && !imageFailed ? (
+              <img
+                src={coverUrl}
+                alt=""
+                className="h-full w-full object-cover"
+                onError={() => setImageFailed(true)}
+              />
+            ) : (
+              <div className="grid h-full min-h-56 place-items-center px-6 text-center text-sm text-brand-muted">Artwork unavailable</div>
+            )}
           </div>
-        </div>
 
-        {/* Content Section - Priority Layout */}
-        <div className="flex-1 min-w-0 p-6 sm:p-8 md:p-10 lg:p-12 overflow-y-auto custom-scrollbar flex flex-col bg-brand-panel-light/40">
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-2 mb-4">
-              {genres.map((g: string) => (
-                <span key={g} className="px-2.5 py-0.5 bg-brand-cyan/10 border border-brand-cyan/20 rounded-full text-[9px] sm:text-[10px] font-black text-brand-cyan uppercase tracking-widest">{g}</span>
-              ))}
+          <div className="flex min-w-0 flex-col p-6 sm:p-8">
+            <div className="pr-12">
+              <div className="mb-4 flex flex-wrap gap-2">
+                <span className="rounded-md bg-brand-raised px-2 py-1 text-xs font-semibold text-brand-subtle">{item.itemType || 'Library item'}</span>
+                {genres.map((genre) => <span key={genre} className="rounded-md border border-brand-border px-2 py-1 text-xs text-brand-muted">{genre}</span>)}
+              </div>
+              <h2 id={titleId} className="break-words text-2xl font-bold tracking-[-0.03em] text-brand-text sm:text-3xl">{item.name}</h2>
+              <p id={descriptionId} className="mt-4 break-words text-sm leading-7 text-brand-subtle sm:text-base">{item.description || 'No additional description is available for this item.'}</p>
             </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black mb-1 text-white leading-tight break-words tracking-tighter">{item.name}</h2>
-            
-            <div className="mt-5 bg-white/5 p-5 sm:p-6 rounded-2xl border border-white/5 shadow-inner">
-               <p className="text-brand-muted leading-relaxed text-sm sm:text-base">{item.description}</p>
+
+            <div className="mt-8 border-t border-brand-border pt-5">
+              <a
+                href={item.downloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-brand-cyan bg-brand-cyan px-5 text-center text-sm font-semibold text-brand-ink transition-colors hover:border-brand-cyan-strong hover:bg-brand-cyan-strong"
+              >
+                {downloadText}
+              </a>
+              <p className="mt-3 text-xs leading-5 text-brand-muted">Downloads open in a new tab. Review the source before installing any software.</p>
             </div>
           </div>
-
-          <div className="mb-8">
-            <a href={item.downloadUrl} target="_blank" rel="noopener noreferrer" className="block">
-              <Button size="lg" className="w-full py-5 text-lg font-black rounded-xl sm:rounded-2xl shadow-xl shadow-brand-cyan/10 active:scale-[0.98]">
-                {getDownloadText()}
-              </Button>
-            </a>
-          </div>
-
         </div>
       </div>
     </div>

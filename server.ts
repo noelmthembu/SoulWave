@@ -1,104 +1,64 @@
 import express from 'express';
-import cors from 'cors';
-import nodemailer from 'nodemailer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 
+try {
+  process.loadEnvFile('.env.local');
+} catch {
+  // Local configuration is optional; production configuration comes from the host environment.
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const approvedOperations = new Set(['GetGenres', 'GetSamplePacks', 'GetPresets', 'GetPlugins']);
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const port = Number(process.env.PORT || 3000);
 
-  app.use(cors());
-  app.use(express.json());
+  app.disable('x-powered-by');
+  app.use(express.json({ limit: '32kb' }));
 
-  // API Routes
-  app.post('/api/contact', async (req, res) => {
-    const { name, email, message } = req.body;
+  app.post('/api/catalog', async (req, res) => {
+    const { query, variables = {} } = req.body || {};
+    if (typeof query !== 'string' || query.length > 8000 || !variables || typeof variables !== 'object') {
+      return res.status(400).json({ errors: [{ message: 'Invalid catalog request.' }] });
+    }
 
-    if (!name || !email || !message) {
-      return res.status(400).json({ error: 'All fields are required' });
+    const operationMatch = query.match(/\bquery\s+(Get[A-Za-z0-9_]+)/);
+    const operationName = operationMatch?.[1];
+    if (!operationName || !approvedOperations.has(operationName)) {
+      return res.status(405).json({ errors: [{ message: 'This catalog operation is not allowed.' }] });
+    }
+
+    const catalogUrl = process.env.HYGRAPH_API_URL;
+    const catalogToken = process.env.HYGRAPH_AUTH_TOKEN;
+    if (!catalogUrl || !catalogToken) {
+      return res.status(503).json({ errors: [{ message: 'The catalog service is not configured.' }] });
     }
 
     try {
-      const smtpUser = (process.env.SMTP_USER || 'soundwaversa@gmail.com').trim();
-      const smtpPass = (process.env.SMTP_PASS || '').trim();
-
-      // Detect if SMTP_PASS is empty or contains a common placeholder/mock value
-      const isPlaceholder = !smtpPass || 
-        smtpPass.toLowerCase().includes('placeholder') || 
-        smtpPass.toLowerCase().includes('your') || 
-        smtpPass.toLowerCase().includes('enter_') || 
-        smtpPass.toLowerCase().includes('password') ||
-        smtpPass.length < 6;
-
-      const mailOptions = {
-        from: `SoundWave Samples <${smtpUser}>`,
-        to: email, // Send to the entered email address
-        cc: smtpUser !== email ? smtpUser : undefined, // CC the admin copy to the SMTP user if different
-        subject: `Contact Message Confirmation - SoundWave Samples`,
-        text: `Hi ${name},\n\nThank you for contacting SoundWave Samples!\n\nWe have received your message and will get back to you shortly.\n\nHere is a copy of your message:\n\n---\nName: ${name}\nEmail: ${email}\nMessage:\n${message}\n---\n\nBest regards,\nThe SoundWave Samples Team`,
-        replyTo: smtpUser,
-      };
-
-      // If no valid configuration exists, fall back immediately to console logging
-      if (isPlaceholder) {
-        console.log('--- Demo Mode Contact Form Log ---');
-        console.log(`Name: ${name}`);
-        console.log(`Email: ${email}`);
-        console.log(`Message: ${message}`);
-        console.log('-----------------------------------');
-        return res.json({ 
-          success: true, 
-          message: 'Demo mode: Message logged to console successfully. Set a valid SMTP_PASS to send real emails.',
-          demoFallback: true,
-          reason: 'placeholder'
-        });
-      }
-
-      // Configure SMTP transporter
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: smtpUser,
-          pass: smtpPass,
+      const upstream = await fetch(catalogUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${catalogToken}`,
         },
+        body: JSON.stringify({ query, variables }),
+        signal: AbortSignal.timeout(10_000),
       });
-
-      try {
-        await transporter.sendMail(mailOptions);
-        res.json({ success: true });
-      } catch (smtpError: any) {
-        // Use console.log / console.warn to log warning so the applet environment doesn't flag it as a server-side crash
-        console.warn('SMTP Send Notification (Falling back to console-logging due to authentication issue):', smtpError?.message || smtpError);
-        console.log('--- Fallback Contact Form Log ---');
-        console.log(`Name: ${name}`);
-        console.log(`Email: ${email}`);
-        console.log(`Message: ${message}`);
-        console.log('---------------------------------');
-        
-        return res.json({ 
-          success: true, 
-          warning: 'SMTP delivery failed. Message fallback logged safely to server console.',
-          demoFallback: true,
-          reason: 'smtp_error',
-          errorDetails: smtpError?.message || 'SMTP Authentication Error'
-        });
+      const text = await upstream.text();
+      const contentType = upstream.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        return res.status(502).json({ errors: [{ message: 'The catalog service returned an unexpected response.' }] });
       }
-    } catch (error: any) {
-      console.warn('Contact endpoint handler warning:', error?.message || error);
-      res.status(200).json({ 
-        success: true, 
-        warning: 'Message processes completed with fallback.',
-        demoFallback: true 
-      });
+      res.status(upstream.status).type('application/json').send(text);
+    } catch {
+      res.status(502).json({ errors: [{ message: 'The catalog service is unavailable. Please try again.' }] });
     }
   });
 
-  // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -106,16 +66,14 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    const distPath = path.join(__dirname, 'dist');
+    app.use(express.static(distPath, { maxAge: '1y', immutable: true, index: false }));
+    app.get('/{*splat}', (_req, res) => res.sendFile(path.join(distPath, 'index.html'), { headers: { 'Cache-Control': 'no-cache' } }));
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`SoundWave server listening on port ${port}`);
   });
 }
 
-startServer();
+void startServer();

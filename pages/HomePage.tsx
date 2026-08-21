@@ -1,225 +1,155 @@
-import React, { useState, useEffect } from 'react';
-import { getSamplePacks, getGenres, getPresets, getPlugins } from '../services/graphqlService';
-import { SamplePack, Genre, Preset, Plugin, BaseContent } from '../types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Search } from 'lucide-react';
+import { getGenres, getPlugins, getPresets, getSamplePacks } from '../services/graphqlService';
+import { BaseContent, Genre, Plugin, Preset, SamplePack } from '../types';
+import Button from '../components/Button';
 import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
-import { useNavigate } from 'react-router-dom';
 
-const Hero: React.FC = () => {
-  const navigate = useNavigate();
-  const [query, setQuery] = useState('');
+type CatalogItem = SamplePack | Preset | Plugin;
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (query.trim()) {
-      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
-    }
-  };
+interface CatalogSectionProps {
+  title: string;
+  description: string;
+  to: string;
+  typeLabel: string;
+  items: CatalogItem[];
+  loading: boolean;
+  onViewDetails: (item: CatalogItem) => void;
+}
 
-  return (
-    <div className="relative overflow-hidden py-24 px-6 text-center bg-gradient-to-b from-brand-panel to-brand-dark rounded-3xl border border-white/5 mb-16">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-brand-cyan/10 blur-[120px] rounded-full -z-10"></div>
-      <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6">
-        Craft Your <span className="text-brand-cyan">Signature Sound</span>
-      </h1>
-      <p className="text-xl text-brand-muted max-w-2xl mx-auto mb-10 leading-relaxed">
-        Discover thousands of royalty-free sample packs, presets, loops, and tutorials to elevate your productions. All completely free.
-      </p>
-      
-      <div className="max-w-xl mx-auto mb-10">
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <input 
-            type="text"
-            placeholder="Search for anything..."
-            className="flex-1 bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-lg text-white placeholder-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 focus:bg-white/10 transition-all"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <button 
-            type="submit"
-            className="bg-brand-cyan hover:bg-cyan-400 text-brand-dark font-black px-8 py-4 rounded-2xl text-lg shadow-xl shadow-brand-cyan/20 transition-all transform hover:scale-105 active:scale-95"
-          >
-            Search
-          </button>
-        </form>
+const CatalogSection: React.FC<CatalogSectionProps> = ({ title, description, to, typeLabel, items, loading, onViewDetails }) => (
+  <section aria-labelledby={`${typeLabel.toLowerCase()}-heading`} className="border-t border-brand-border pt-8 sm:pt-10">
+    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-cyan">Library</p>
+        <h2 id={`${typeLabel.toLowerCase()}-heading`} className="mt-2 text-2xl font-bold tracking-[-0.03em] text-brand-text sm:text-3xl">{title}</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-brand-muted">{description}</p>
       </div>
-
-      <button 
-        onClick={() => navigate('/packs')}
-        className="text-brand-cyan hover:underline font-black uppercase text-xs tracking-widest opacity-60"
-      >
-        Or browse all packs
-      </button>
+      <Link to={to} className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-brand-cyan hover:text-brand-text sm:self-auto">
+        Explore all <ArrowRight className="h-4 w-4" aria-hidden="true" />
+      </Link>
     </div>
-  );
-};
+
+    {loading ? (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-live="polite" aria-label={`Loading ${title.toLowerCase()}`}>
+        {[0, 1, 2].map((index) => <div key={index} className="aspect-[4/5] rounded-xl border border-brand-border bg-brand-surface animate-pulse" />)}
+        <span className="sr-only">Loading {title.toLowerCase()}…</span>
+      </div>
+    ) : items.length > 0 ? (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((item) => <ContentCard key={item.id} item={item} typeLabel={typeLabel} onViewDetails={() => onViewDetails(item)} />)}
+      </div>
+    ) : (
+      <div className="rounded-xl border border-dashed border-brand-border px-5 py-8 text-sm text-brand-muted">No {title.toLowerCase()} are available right now. Check back later or explore another category.</div>
+    )}
+  </section>
+);
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const [query, setQuery] = useState('');
   const [packs, setPacks] = useState<SamplePack[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [plugins, setPlugins] = useState<Plugin[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedItem, setSelectedItem] = useState<BaseContent | null>(null);
 
-  const fetchData = async (isInitial = false) => {
-    if (isInitial) setLoading(true);
+  const loadCatalog = useCallback(async () => {
+    setLoading(true);
+    setError('');
     try {
-      const [pData, gData, preData, pluData] = await Promise.all([
-        getSamplePacks(), 
+      const [packData, genreData, presetData, pluginData] = await Promise.all([
+        getSamplePacks(),
         getGenres(),
         getPresets(),
-        getPlugins()
+        getPlugins(),
       ]);
-      setPacks(pData.filter(p => p.featured).slice(0, 3));
-      setPresets(preData.slice(0, 3));
-      setPlugins(pluData.slice(0, 3));
-      setGenres(gData);
-    } catch (err) {
-      console.error(err);
+      setPacks(packData.filter((pack) => pack.featured).slice(0, 3));
+      setPresets(presetData.slice(0, 3));
+      setPlugins(pluginData.slice(0, 3));
+      setGenres(genreData);
+    } catch {
+      setError('We could not load the library. Your saved search and navigation are still available.');
     } finally {
-      if (isInitial) setLoading(false);
+      setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchData(true);
-    // Polling every 10 seconds for real-time updates from Hygraph
-    const interval = setInterval(() => fetchData(false), 10000);
-    return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    void loadCatalog();
+  }, [loadCatalog]);
+
+  const handleSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    const cleanQuery = query.trim();
+    if (cleanQuery) navigate(`/search?q=${encodeURIComponent(cleanQuery)}`);
+  };
+
   return (
-    <div className="pb-20">
-      <Hero />
-      
-      {/* Featured Sample Packs */}
-      <div className="mb-20">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-black flex items-center gap-3">
-            <span className="w-2 h-10 bg-brand-cyan rounded-full"></span>
-            Featured Sample Packs
-          </h2>
-          <button 
-            onClick={() => navigate('/packs')}
-            className="text-brand-cyan hover:text-cyan-400 font-black uppercase text-xs tracking-widest transition-colors"
-          >
-            View All
-          </button>
+    <div className="pb-8">
+      <section className="border-b border-brand-border pb-10 sm:pb-14" aria-labelledby="home-title">
+        <div className="max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-cyan">Sound library for producers</p>
+          <h1 id="home-title" className="mt-4 max-w-2xl text-4xl font-bold tracking-[-0.05em] text-brand-text sm:text-5xl lg:text-6xl">Find the sound that fits this session.</h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-brand-subtle sm:text-lg">Browse free sample packs, presets, and production tools without losing your place in the work.</p>
         </div>
-        
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[1, 2, 3].map(n => (
-              <div key={n} className="aspect-square bg-white/5 animate-pulse rounded-[2rem]"></div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {packs.map(pack => (
-              <ContentCard 
-                key={pack.id} 
-                item={pack} 
-                typeLabel="Pack"
-                onViewDetails={() => setSelectedItem(pack)} 
+
+        <form onSubmit={handleSearch} className="mt-8 max-w-2xl" role="search">
+          <label htmlFor="hero-search" className="text-sm font-semibold text-brand-text">Search the library</label>
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-muted" aria-hidden="true" />
+              <input
+                id="hero-search"
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Try “Amapiano keys” or “drum kit”"
+                className="min-h-12 w-full rounded-lg border border-brand-border bg-brand-surface py-3 pl-11 pr-3 text-base text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none"
               />
-            ))}
+            </div>
+            <Button type="submit" size="lg" className="w-full sm:w-auto">Search library</Button>
           </div>
-        )}
-      </div>
+        </form>
 
-      {/* Presets Section */}
-      <div className="mb-20">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-black flex items-center gap-3">
-            <span className="w-2 h-10 bg-brand-cyan rounded-full"></span>
-            Latest Presets
-          </h2>
-          <button 
-            onClick={() => navigate('/presets')}
-            className="text-brand-cyan hover:text-cyan-400 font-black uppercase text-xs tracking-widest transition-colors"
-          >
-            View All
-          </button>
+        <nav className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm" aria-label="Browse categories">
+          <Link to="/packs" className="font-semibold text-brand-cyan hover:text-brand-text">Browse packs</Link>
+          <Link to="/presets" className="font-semibold text-brand-cyan hover:text-brand-text">Explore presets</Link>
+          <Link to="/plugins" className="font-semibold text-brand-cyan hover:text-brand-text">Find tools</Link>
+        </nav>
+      </section>
+
+      {error && (
+        <div className="mt-8 flex flex-col gap-3 rounded-xl border border-red-300/40 bg-red-950/30 p-4 text-sm text-red-100 sm:flex-row sm:items-center sm:justify-between" role="alert">
+          <span>{error}</span>
+          <Button variant="secondary" size="sm" onClick={() => void loadCatalog()}>Try again</Button>
         </div>
-        
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[1, 2, 3].map(n => (
-              <div key={n} className="aspect-square bg-white/5 animate-pulse rounded-[2rem]"></div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {presets.map(preset => (
-              <ContentCard 
-                key={preset.id} 
-                item={preset} 
-                typeLabel="Preset"
-                onViewDetails={() => setSelectedItem(preset)} 
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Plugins Section */}
-      <div className="mb-20">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-black flex items-center gap-3">
-            <span className="w-2 h-10 bg-brand-cyan rounded-full"></span>
-            Essential Plugins
-          </h2>
-          <button 
-            onClick={() => navigate('/plugins')}
-            className="text-brand-cyan hover:text-cyan-400 font-black uppercase text-xs tracking-widest transition-colors"
-          >
-            View All
-          </button>
-        </div>
-        
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[1, 2, 3].map(n => (
-              <div key={n} className="aspect-square bg-white/5 animate-pulse rounded-[2rem]"></div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {plugins.map(plugin => (
-              <ContentCard 
-                key={plugin.id} 
-                item={plugin} 
-                typeLabel="Plugin"
-                onViewDetails={() => setSelectedItem(plugin)} 
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="bg-brand-panel/50 border border-white/5 rounded-[3rem] p-12 text-center">
-        <h3 className="text-2xl font-black mb-6">Browse by Genre</h3>
-        <div className="flex flex-wrap justify-center gap-3">
-          {genres.map(genre => (
-            <button 
-              key={genre.id}
-              onClick={() => navigate(`/packs?genre=${genre.name}`)}
-              className="px-8 py-3 rounded-full bg-white/5 hover:bg-brand-cyan hover:text-brand-dark text-sm font-black transition-all border border-white/5 hover:scale-105"
-            >
-              {genre.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {selectedItem && (
-        <ContentModal 
-          item={selectedItem} 
-          onClose={() => setSelectedItem(null)} 
-        />
       )}
+
+      <div className="space-y-10 sm:space-y-14">
+        <CatalogSection title="Featured sample packs" description="A short, practical selection of sound sources for your current project." to="/packs" typeLabel="Pack" items={packs} loading={loading} onViewDetails={setSelectedItem} />
+        <CatalogSection title="Latest presets" description="Start with settings designed to give synth and instrument ideas a clear direction." to="/presets" typeLabel="Preset" items={presets} loading={loading} onViewDetails={setSelectedItem} />
+        <CatalogSection title="Production tools" description="Browse the software and tools listed by the SoundWave community." to="/plugins" typeLabel="Plugin" items={plugins} loading={loading} onViewDetails={setSelectedItem} />
+      </div>
+
+      <section className="mt-10 border-t border-brand-border pt-8 sm:mt-14 sm:pt-10" aria-labelledby="genres-heading">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-cyan">Filter</p>
+        <h2 id="genres-heading" className="mt-2 text-2xl font-bold tracking-[-0.03em] text-brand-text">Browse by genre</h2>
+        <p className="mt-2 text-sm leading-6 text-brand-muted">Choose a genre to open matching sample packs.</p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          {genres.length > 0 ? genres.map((genre) => (
+            <Link key={genre.id} to={`/packs?genre=${encodeURIComponent(genre.name)}`} className="inline-flex min-h-10 items-center rounded-lg border border-brand-border bg-brand-surface px-3 text-sm text-brand-subtle hover:border-brand-cyan hover:text-brand-text">
+              {genre.name}
+            </Link>
+          )) : <p className="text-sm text-brand-muted">Genres will appear when the library is available.</p>}
+        </div>
+      </section>
+
+      {selectedItem && <ContentModal item={selectedItem} onClose={() => setSelectedItem(null)} />}
     </div>
   );
 };

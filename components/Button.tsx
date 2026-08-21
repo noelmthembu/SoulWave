@@ -1,9 +1,8 @@
-
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'quiet' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
 }
@@ -14,32 +13,35 @@ const Button: React.FC<ButtonProps> = ({
   size = 'md',
   isLoading = false,
   className = '',
+  disabled,
   ...props
 }) => {
-  const baseClasses = 'font-bold rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-brand-dark disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2';
+  const baseClasses = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 font-semibold transition-colors motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-55';
 
   const variantClasses = {
-    primary: 'bg-brand-cyan text-brand-dark hover:bg-cyan-300 focus:ring-brand-cyan',
-    secondary: 'bg-brand-light-dark text-white hover:bg-gray-600 focus:ring-brand-cyan',
-    danger: 'bg-red-600 text-white hover:bg-red-500 focus:ring-red-500',
+    primary: 'border-brand-cyan bg-brand-cyan text-brand-ink hover:border-brand-cyan-strong hover:bg-brand-cyan-strong',
+    secondary: 'border-brand-border bg-brand-raised text-brand-text hover:border-brand-cyan hover:bg-brand-raised/80',
+    quiet: 'border-transparent bg-transparent text-brand-subtle hover:bg-brand-raised hover:text-brand-text',
+    danger: 'border-red-300/45 bg-red-950/50 text-red-100 hover:bg-red-950',
   };
 
   const sizeClasses = {
-    sm: 'py-1.5 px-3 text-xs',
-    md: 'py-2 px-4 text-sm',
-    lg: 'py-3 px-6 text-base',
+    sm: 'min-h-10 px-3 text-sm',
+    md: 'min-h-11 px-4 text-sm',
+    lg: 'min-h-12 px-5 text-base',
   };
 
   return (
     <button
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
-      disabled={isLoading}
+      disabled={disabled || isLoading}
+      aria-busy={isLoading || undefined}
       {...props}
     >
       {isLoading && (
-        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        <svg className="h-4 w-4 animate-spin" aria-hidden="true" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3" />
+          <path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
         </svg>
       )}
       {children}

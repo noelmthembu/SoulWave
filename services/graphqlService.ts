@@ -1,161 +1,78 @@
-import { SamplePack, Preset, Plugin, Tutorial, Comment, Genre } from '../types';
-import { MOCK_TUTORIALS } from '../constants';
+import { Genre, Plugin, Preset, SamplePack } from '../types';
 
-const API_URL = 'https://api-ap-south-1.hygraph.com/v2/cmhbi308501mb07w7xwb16yd5/master';
-const AUTH_TOKEN = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImdjbXMtbWFpbi1wcm9kdWN0aW9uIn0.eyJ2ZXJzaW9uIjozLCJpYXQiOjE3NjE3MzQ2NTEsImF1ZCI6WyJodHRwczovL2FwaS1hcC1zb3V0aC0xLmh5Z3JhcGguY29tL3YyL2NtaGJpMzA4NTAxbWIwN3c3eHdiMTZ5ZDUvbWFzdGVyIiwibWFuYWdlbWVudC1uZXh0LmdyYXBoY21zLmNvbSJdLCJpc3MiOiJodHRwczovL21hbmFnZW1lbnQtYXAtc291dGgtMS5oeWdyYXBoLmNvbS8iLCJzdWIiOiJiMjlkYmQzMC1iMjhjLTQyMTAtYTkyNC03YjUxYmEyNTNhZTEiLCJqdGkiOiJjbWhidmJvcTcwanBxMDdwbjR2N3M0N2F1In0.lctlFtrsisbVIPp_fDbAs78dNqXTBNpqi_1sYe4lqoMZ5oqxmNdWE2D7s8atUIjA9MYqWaLwsFfwIyR2Sw3ndj6sabxWyRASkI_jRqWdiuOQab9Y0XxhVwvb49OxlF9ZFUyHHEnO2r8_SPB04Nv_Cxz_1AC3PbpgwwBvknrjSLpA5fPsqJRD1Cck-xfks39PB7OUirmaSLA75TTM6nZJmBKGdpxDWobfTL6imAgYe1mct6bPk-kgfOTmbfB1N2lt1NP-fHi9HKm_cteTLy_c85U_WWO9qSUtMQBwiVmWXP4TuQ5pPHiv8P_vD6urV5bo7Qfko8cOQcKSlVz95-bkyuhAMT4vrRtBs6-ew141XjPqWAMxU0ZIbGlhyiRm6YT0aPSJ-GFzLtHnIDB7HYtlQlDEYBC55rKjPU4EKYX6pv87zdC1G3UHoiWjC1ug53UyDkbzTO0zMbJDubkUzShpFF7ZEc5ej-Pzt8-fv0TXfLPZJIpLXwyknWd1wyXqLN3ngQe4X-K7ARVSJWUS7t7iHswpzcuL2WVLp03u7PgW-1h-X27J3ePII1hQErUZ3-E-2XkE0DC1D2u-zaeQMRvFRzOUFA8n1zxRCTS8WDmv5HlIW8qyx1SifMitqF9L-8nZ3gP0mfHVMsGGGc-jInLB1MW-a4e8OEROKLTi-7jFxXw';
+type ContentType = 'Pack' | 'Preset' | 'Plugin';
 
-const LOCAL_COMMENTS: Record<string, Comment[]> = {};
-
-async function graphqlRequest(query: string, variables: Record<string, any> = {}) {
-    const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${AUTH_TOKEN}`,
-    };
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ query, variables }),
-        });
-        const json = await response.json();
-        if (json.errors) {
-            console.error('Hygraph GraphQL Error:', json.errors.map((e: any) => e.message).join(', '));
-            return { errors: json.errors };
-        }
-        return { data: json.data };
-    } catch (e) {
-        console.error('Network Error:', e);
-        return { errors: [{ message: 'Network request failed' }] };
-    }
+interface GraphQLResponse<T> {
+  data?: T;
+  errors?: Array<{ message?: string }>;
 }
 
-const normalizeContent = (item: any, type?: 'Pack' | 'Preset' | 'Plugin') => {
-    if (!item) return null;
-    
-    // Normalize genre into a simple string array
-    let normalizedGenres: string[] = [];
-    if (item.genre) {
-        if (Array.isArray(item.genre)) {
-            normalizedGenres = item.genre.map((g: any) => (typeof g === 'string' ? g : g.name || 'General'));
-        } else if (typeof item.genre === 'string') {
-            normalizedGenres = [item.genre];
-        }
-    }
+const CATALOG_ENDPOINT = '/api/catalog';
 
-    return {
-        ...item,
-        itemType: type,
-        coverArt: Array.isArray(item.coverArt) ? item.coverArt : (item.coverArt ? [item.coverArt] : []),
-        genre: normalizedGenres
-    };
-};
+async function graphqlRequest<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
+  const response = await fetch(CATALOG_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  const payload = await response.json().catch(() => null) as GraphQLResponse<T> | null;
+  if (!response.ok || !payload || payload.errors || !payload.data) {
+    const reason = payload?.errors?.map((error) => error.message).filter(Boolean).join(', ') || 'Catalog request failed';
+    throw new Error(reason);
+  }
+  return payload.data;
+}
+
+function normalizeContent<T>(item: unknown, type: ContentType): T {
+  const source = (item || {}) as Record<string, unknown>;
+  const rawGenres = source.genre;
+  const genre = Array.isArray(rawGenres)
+    ? rawGenres.map((value) => typeof value === 'string' ? value : (value as { name?: string })?.name || 'General')
+    : typeof rawGenres === 'string' ? [rawGenres] : [];
+  const rawCoverArt = source.coverArt;
+  const coverArt = Array.isArray(rawCoverArt) ? rawCoverArt : rawCoverArt ? [rawCoverArt] : [];
+
+  return { ...source, itemType: type, genre, coverArt } as T;
+}
 
 export const getGenres = async (): Promise<Genre[]> => {
-    const query = `query { genres(orderBy: name_ASC) { id name slug } }`;
-    const response = await graphqlRequest(query);
-    if (response.errors) {
-        return [
-            { id: '1', name: 'Lofi', slug: 'lofi' },
-            { id: '2', name: 'Trap', slug: 'trap' },
-            { id: '3', name: 'Techno', slug: 'techno' },
-            { id: '4', name: 'House', slug: 'house' },
-            { id: '5', name: 'Cinematic', slug: 'cinematic' }
-        ];
-    }
-    return response.data?.genres || [];
+  const data = await graphqlRequest<{ genres?: Genre[] }>('query GetGenres { genres(orderBy: name_ASC) { id name slug } }');
+  return data.genres || [];
 };
 
-export const getSamplePacks = async (genreName?: string): Promise<SamplePack[]> => {
-    const whereArg = genreName && genreName !== 'All' ? `where: { genre_contains_some: ["${genreName}"] }` : '';
-    const query = `
-        query GetSamplePacks {
-            samplePacks(first: 1000${whereArg ? ', ' + whereArg : ''}) {
-                id name description downloadUrl featured slug
-                genre
-                coverArt { url }
-            }
-        }
-    `;
-    const response = await graphqlRequest(query);
-    if (!response.data?.samplePacks) return [];
-    return response.data.samplePacks.map((item: any) => normalizeContent(item, 'Pack'));
+export const getSamplePacks = async (): Promise<SamplePack[]> => {
+  const data = await graphqlRequest<{ samplePacks?: unknown[] }>(`
+    query GetSamplePacks {
+      samplePacks(first: 120) {
+        id name description downloadUrl featured slug genre
+        coverArt { url }
+      }
+    }
+  `);
+  return (data.samplePacks || []).map((item) => normalizeContent<SamplePack>(item, 'Pack'));
 };
 
 export const getPresets = async (): Promise<Preset[]> => {
-    const query = `
-        query {
-            presets(first: 1000) {
-                id name slug description downloadUrl pluginCompatibility
-                coverArt { url }
-            }
-        }
-    `;
-    const response = await graphqlRequest(query);
-    if (!response.data?.presets) return [];
-    return response.data.presets.map((item: any) => normalizeContent(item, 'Preset'));
+  const data = await graphqlRequest<{ presets?: unknown[] }>(`
+    query GetPresets {
+      presets(first: 120) {
+        id name slug description downloadUrl
+        coverArt { url }
+      }
+    }
+  `);
+  return (data.presets || []).map((item) => normalizeContent<Preset>(item, 'Preset'));
 };
 
 export const getPlugins = async (): Promise<Plugin[]> => {
-    const query = `
-        query {
-            plugins(first: 1000) {
-                id name slug description downloadUrl
-                coverArt { url }
-            }
-        }
-    `;
-    const response = await graphqlRequest(query);
-    if (!response.data?.plugins) return [];
-    return response.data.plugins.map((item: any) => normalizeContent(item, 'Plugin'));
-};
-
-export const getTutorials = async (): Promise<Tutorial[]> => {
-    const query = `query { tutorials { id name slug creator channelUrl youtubeId description } }`;
-    const response = await graphqlRequest(query);
-    return response.data?.tutorials || MOCK_TUTORIALS;
-};
-
-export const getComments = async (entityId: string): Promise<Comment[]> => {
-    const query = `
-        query GetComments($entityId: String!) {
-            comments(where: { entityId: $entityId }, orderBy: createdAt_DESC) {
-                id authorName text createdAt
-            }
-        }
-    `;
-    const response = await graphqlRequest(query, { entityId });
-    const serverComments = response.data?.comments || [];
-    const localComments = LOCAL_COMMENTS[entityId] || [];
-    return [...localComments, ...serverComments].sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-};
-
-export const addComment = async (entityId: string, authorName: string, text: string): Promise<Comment> => {
-    const mutation = `
-        mutation CreateComment($entityId: String!, $authorName: String!, $text: String!) {
-            createComment(data: { entityId: $entityId, authorName: $authorName, text: $text }) {
-                id authorName text createdAt
-            }
-        }
-    `;
-    const response = await graphqlRequest(mutation, { entityId, authorName, text });
-    
-    if (response.data?.createComment) {
-        try {
-            await graphqlRequest(`mutation { publishComment(where: { id: "${response.data.createComment.id}" }, to: PUBLISHED) { id } }`);
-        } catch(e) {}
-        return response.data.createComment;
+  const data = await graphqlRequest<{ plugins?: unknown[] }>(`
+    query GetPlugins {
+      plugins(first: 120) {
+        id name slug description downloadUrl
+        coverArt { url }
+      }
     }
-
-    const fallbackComment: Comment = {
-        id: `local-${Date.now()}`,
-        entityId,
-        authorName,
-        text,
-        createdAt: new Date().toISOString()
-    };
-    if (!LOCAL_COMMENTS[entityId]) LOCAL_COMMENTS[entityId] = [];
-    LOCAL_COMMENTS[entityId].unshift(fallbackComment);
-    return fallbackComment;
+  `);
+  return (data.plugins || []).map((item) => normalizeContent<Plugin>(item, 'Plugin'));
 };

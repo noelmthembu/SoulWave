@@ -1,23 +1,120 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-cyan: #00c4d6;
-  --color-brand-cyan-dark: #00a7be;
-  --color-brand-dark: #071425;
-  --color-brand-panel: #0f2630;
-  --color-brand-panel-light: #14202a;
-  --color-brand-text: #e6f6fb;
-  --color-brand-muted: #98a7b2;
-  
-  --font-sans: "Inter", "Helvetica", "Arial", sans-serif;
+  --color-brand-canvas: #0b1010;
+  --color-brand-surface: #121a19;
+  --color-brand-raised: #182321;
+  --color-brand-border: #2b3936;
+  --color-brand-text: #f1f4ee;
+  --color-brand-muted: #a8b3ac;
+  --color-brand-subtle: #ced6d0;
+  --color-brand-cyan: #8ee7d6;
+  --color-brand-cyan-strong: #5fd1bb;
+  --color-brand-ink: #081211;
+  --color-brand-focus: #f3c96d;
+  --color-brand-error: #ffb4ab;
+  --color-brand-success: #a7f3d0;
+  --color-brand-warning: #fbd38d;
+  --color-brand-dark: #0b1010;
+  --color-brand-panel: #121a19;
+  --color-brand-panel-light: #182321;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* Slightly larger cursor like FL Studio */
+:root {
+  color-scheme: dark;
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 html {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='white' stroke='black' stroke-width='1.5'%3E%3Cpath d='M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z'/%3E%3C/svg%3E"), auto;
+  min-width: 320px;
+  scroll-behavior: smooth;
+  background: var(--color-brand-canvas);
 }
 
-/* Ensure interactive elements use pointer cursor but still slightly larger if possible */
-a, button, [role="button"] {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='white' stroke='black' stroke-width='1.5'%3E%3Cpath d='M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z'/%3E%3C/svg%3E"), pointer;
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--color-brand-canvas);
+  color: var(--color-brand-text);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button,
+a,
+input,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+a[href] {
+  cursor: pointer;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-brand-focus);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--color-brand-cyan);
+  color: var(--color-brand-ink);
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 0.75rem;
+  left: 0.75rem;
+  transform: translateY(-160%);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--color-brand-focus);
+  color: var(--color-brand-ink);
+  font-weight: 700;
+  transition: transform 150ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 359px) {
+  html {
+    font-size: 15px;
+  }
 }

@@ -1,5 +1,5 @@
-import React from 'react';
-import { BaseContent, SamplePack, Preset, Plugin } from '../types';
+import React, { useState } from 'react';
+import { BaseContent, Plugin, Preset, SamplePack } from '../types';
 import Button from './Button';
 
 interface ContentCardProps {
@@ -9,84 +9,68 @@ interface ContentCardProps {
 }
 
 const ContentCard: React.FC<ContentCardProps> = ({ item, onViewDetails, typeLabel }) => {
-  const coverUrl = item.coverArt?.[0]?.url || 'https://via.placeholder.com/400';
-  
-  // Extract genres if available
-  const genres = (item as any).genre || [];
-  const featured = (item as any).featured || false;
+  const [imageFailed, setImageFailed] = useState(false);
+  const coverUrl = item.coverArt?.[0]?.url;
+  const genres = Array.isArray((item as SamplePack).genre) ? (item as SamplePack).genre : [];
+  const featured = Boolean((item as SamplePack).featured);
 
   return (
-    <div className="group bg-brand-panel border border-white/5 rounded-[2rem] overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-cyan/10 flex flex-col h-full">
-      <div 
-        className="relative aspect-square w-full overflow-hidden cursor-pointer bg-brand-dark/40" 
+    <article className="flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-surface">
+      <button
+        type="button"
         onClick={onViewDetails}
+        className="group relative aspect-[4/3] w-full overflow-hidden bg-brand-raised text-left"
+        aria-label={`View details for ${item.name}`}
       >
-        <img 
-          src={coverUrl} 
-          alt={item.name} 
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-          loading="lazy"
-        />
-        <div className="absolute inset-0 bg-brand-dark/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 px-6 py-3 rounded-full font-bold text-sm tracking-widest uppercase text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-            Quick View
-          </div>
-        </div>
-        {(featured || typeLabel) && (
-          <div className="absolute top-4 left-4 flex gap-2 z-10">
-            {featured && (
-              <div className="bg-brand-cyan text-brand-dark font-black text-[10px] px-3 py-1 rounded-full uppercase tracking-tighter shadow-lg">
-                Featured
-              </div>
-            )}
-            {typeLabel && (
-              <div className="bg-white/20 backdrop-blur-md text-white font-black text-[10px] px-3 py-1 rounded-full uppercase tracking-tighter shadow-lg border border-white/10">
-                {typeLabel}
-              </div>
-            )}
-          </div>
+        {coverUrl && !imageFailed ? (
+          <img
+            src={coverUrl}
+            alt=""
+            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02] motion-reduce:transition-none"
+            loading="lazy"
+            decoding="async"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <div className="grid h-full place-items-center px-6 text-center text-sm text-brand-muted">Artwork unavailable</div>
         )}
-      </div>
+        <span className="absolute inset-x-0 bottom-0 bg-brand-canvas/80 px-4 py-3 text-sm font-semibold text-brand-text opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
+          View details
+        </span>
+      </button>
 
-      <div className="p-6 flex-grow flex flex-col">
-        <div className="mb-4">
-          <h3 className="text-lg font-black text-white truncate group-hover:text-brand-cyan transition-colors">
-            {item.name}
-          </h3>
+      <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+          {typeLabel && <span className="rounded-md bg-brand-raised px-2 py-1 text-brand-subtle">{typeLabel}</span>}
+          {featured && <span className="rounded-md bg-brand-cyan px-2 py-1 text-brand-ink">Featured</span>}
         </div>
 
-        <div className="flex flex-wrap gap-1.5 mb-6">
-          {genres.length > 0 ? genres.slice(0, 3).map((g: string) => (
-            <span key={g} className="px-2.5 py-0.5 bg-white/5 rounded-full text-[10px] font-bold text-brand-muted uppercase tracking-wider border border-white/5">
-              {g}
-            </span>
-          )) : (
-            <span className="px-2.5 py-0.5 bg-white/5 rounded-full text-[10px] font-bold text-brand-muted/40 uppercase tracking-wider border border-white/5">
-              General
-            </span>
-          )}
-          {genres.length > 3 && (
-            <span className="text-[10px] text-brand-muted font-bold self-center">+{genres.length - 3}</span>
-          )}
+        <div className="min-w-0">
+          <h3 className="break-words text-lg font-bold leading-snug text-brand-text">{item.name}</h3>
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-brand-muted">{item.description || 'Download details are available in the item view.'}</p>
         </div>
 
-        <div className="mt-auto grid grid-cols-2 gap-3">
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl"
-            onClick={onViewDetails}
+        <div className="flex min-h-7 flex-wrap gap-1.5" aria-label="Genres">
+          {genres.length > 0 ? genres.slice(0, 3).map((genre) => (
+            <span key={genre} className="rounded-md border border-brand-border px-2 py-1 text-xs text-brand-muted">{genre}</span>
+          )) : <span className="text-xs text-brand-muted">General</span>}
+          {genres.length > 3 && <span className="px-1 py-1 text-xs text-brand-muted">+{genres.length - 3} more</span>}
+        </div>
+
+        <div className="mt-auto grid grid-cols-2 gap-2 pt-1">
+          <Button variant="secondary" size="sm" className="w-full" onClick={onViewDetails}>Details</Button>
+          <a
+            href={item.downloadUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-brand-cyan bg-brand-cyan px-3 text-sm font-semibold text-brand-ink transition-colors hover:border-brand-cyan-strong hover:bg-brand-cyan-strong"
+            aria-label={`Open download for ${item.name}`}
           >
-            Details
-          </Button>
-          <a href={item.downloadUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
-            <Button size="sm" className="w-full rounded-xl">
-              Get
-            </Button>
+            Get
           </a>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 
