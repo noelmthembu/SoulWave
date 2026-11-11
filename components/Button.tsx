@@ -14,25 +14,28 @@ const Button: React.FC<ButtonProps> = ({
   isLoading = false,
   className = '',
   disabled,
+  type = 'button',
   ...props
 }) => {
-  const baseClasses = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 font-semibold transition-colors motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-55';
+  const baseClasses =
+    'inline-flex items-center justify-center gap-2 rounded-none border font-medium transition-colors duration-150 motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50';
 
   const variantClasses = {
-    primary: 'border-brand-cyan bg-brand-cyan text-brand-ink hover:border-brand-cyan-strong hover:bg-brand-cyan-strong',
-    secondary: 'border-brand-border bg-brand-raised text-brand-text hover:border-brand-cyan hover:bg-brand-raised/80',
-    quiet: 'border-transparent bg-transparent text-brand-subtle hover:bg-brand-raised hover:text-brand-text',
-    danger: 'border-red-300/45 bg-red-950/50 text-red-100 hover:bg-red-950',
+    primary: 'border-brand-accent bg-brand-accent text-brand-on-accent hover:border-brand-accent-strong hover:bg-brand-accent-strong',
+    secondary: 'border-brand-border-strong bg-transparent text-brand-text hover:bg-brand-raised',
+    quiet: 'border-transparent bg-transparent text-brand-muted hover:bg-brand-raised hover:text-brand-text',
+    danger: 'border-brand-error/40 bg-brand-error-soft text-brand-error hover:border-brand-error hover:bg-brand-error hover:text-brand-on-accent',
   };
 
   const sizeClasses = {
-    sm: 'min-h-10 px-3 text-sm',
+    sm: 'min-h-10 px-3 text-[13px]',
     md: 'min-h-11 px-4 text-sm',
-    lg: 'min-h-12 px-5 text-base',
+    lg: 'min-h-12 px-5 text-sm sm:px-6 sm:text-base',
   };
 
   return (
     <button
+      type={type}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       disabled={disabled || isLoading}
       aria-busy={isLoading || undefined}

@@ -14,7 +14,7 @@ const Input: React.FC<InputProps> = ({ label, id, hint, error, containerClassNam
 
   return (
     <div className={containerClassName}>
-      <label htmlFor={id} className="mb-2 block text-sm font-semibold text-brand-text">
+      <label htmlFor={id} className="mb-2 block text-[13px] font-medium text-brand-text">
         {label}{required && <span aria-hidden="true"> *</span>}
       </label>
       {hint && <p id={hintId} className="mb-2 text-xs leading-5 text-brand-muted">{hint}</p>}
@@ -23,7 +23,7 @@ const Input: React.FC<InputProps> = ({ label, id, hint, error, containerClassNam
         required={required}
         aria-invalid={Boolean(error) || undefined}
         aria-describedby={describedBy}
-        className={`min-h-12 w-full rounded-lg border border-brand-border bg-brand-canvas px-3 py-3 text-base text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none ${error ? 'border-red-300 focus:border-red-300' : ''} ${className}`}
+        className={`min-h-12 w-full rounded-none border border-brand-border bg-brand-surface px-3 py-3 text-base text-brand-text placeholder:text-brand-muted/80 transition-colors hover:border-brand-border-strong focus:border-brand-accent focus:outline-none ${error ? 'border-brand-error' : ''} ${className}`}
         {...props}
       />
       {error && <p id={errorId} className="mt-2 text-sm text-brand-error" role="alert">{error}</p>}
