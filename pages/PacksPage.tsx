@@ -6,16 +6,14 @@ import ContentGrid from '../components/ContentGrid';
 import ContentModal from '../components/ContentModal';
 import EmptyState from '../components/EmptyState';
 import ErrorNotice from '../components/ErrorNotice';
-import FilterChips from '../components/FilterChips';
 import PageHeader from '../components/PageHeader';
 import SearchForm from '../components/SearchForm';
-import { getGenres, getSamplePacks } from '../services/graphqlService';
-import { Genre, SamplePack } from '../types';
+import { getSamplePacks } from '../services/graphqlService';
+import { SamplePack } from '../types';
 
 const PacksPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [packs, setPacks] = useState<SamplePack[]>([]);
-  const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedGenre, setSelectedGenre] = useState(searchParams.get('genre') || 'All');
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [loading, setLoading] = useState(true);
@@ -26,9 +24,8 @@ const PacksPage: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const [packData, genreData] = await Promise.all([getSamplePacks(), getGenres()]);
+      const packData = await getSamplePacks();
       setPacks(packData);
-      setGenres(genreData);
     } catch {
       setError('The pack library could not be loaded. Please try again.');
     } finally {
@@ -61,11 +58,6 @@ const PacksPage: React.FC = () => {
     setSearchParams(params, { replace: true });
   };
 
-  const selectGenre = (genre: string) => {
-    setSelectedGenre(genre);
-    updateParams(query, genre);
-  };
-
   const resetFilters = () => {
     setQuery('');
     setSelectedGenre('All');
@@ -93,25 +85,7 @@ const PacksPage: React.FC = () => {
         />
       </PageHeader>
 
-      <div className="py-6 sm:py-7">
-        <FilterChips
-          label="Filter by genre"
-          options={['All', ...genres.map((genre) => genre.name)]}
-          value={selectedGenre}
-          onChange={selectGenre}
-          action={hasFilters ? (
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="font-mono text-[11px] uppercase tracking-[0.16em] text-brand-accent underline decoration-brand-accent/30 underline-offset-4 hover:decoration-brand-accent"
-            >
-              Reset filters
-            </button>
-          ) : undefined}
-        />
-      </div>
-
-      {error && <ErrorNotice className="mb-6" message={error} onRetry={() => void loadPacks()} />}
+      {error && <ErrorNotice className="my-6" message={error} onRetry={() => void loadPacks()} />}
 
       <section aria-labelledby="pack-results-title">
         <div className="mb-4 flex items-baseline justify-between gap-4 border-t border-brand-border pt-4">
