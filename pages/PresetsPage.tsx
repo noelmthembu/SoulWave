@@ -1,9 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import Button from '../components/Button';
 import ContentCard from '../components/ContentCard';
+import ContentGrid from '../components/ContentGrid';
 import ContentModal from '../components/ContentModal';
+import EmptyState from '../components/EmptyState';
+import ErrorNotice from '../components/ErrorNotice';
+import PageHeader from '../components/PageHeader';
+import SearchForm from '../components/SearchForm';
 import { getPresets } from '../services/graphqlService';
 import { Preset } from '../types';
 
@@ -38,66 +42,76 @@ const PresetsPage: React.FC = () => {
   const filteredPresets = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     if (!normalizedQuery) return presets;
-    return presets.filter((preset) => [preset.name, preset.description, preset.pluginCompatibility, ...(preset.genre || [])].filter(Boolean).some((value) => value.toLowerCase().includes(normalizedQuery)));
+    return presets.filter((preset) =>
+      [preset.name, preset.description, preset.pluginCompatibility, ...(preset.genre || [])]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(normalizedQuery)),
+    );
   }, [presets, query]);
 
-  const submitSearch = (event: React.FormEvent) => {
-    event.preventDefault();
+  const submitSearch = () => {
     setSearchParams(query.trim() ? { q: query.trim() } : {}, { replace: true });
   };
 
+  const clearSearch = () => {
+    setQuery('');
+    setSearchParams({}, { replace: true });
+  };
+
+  const count = filteredPresets.length;
+
   return (
     <div>
-      <header className="border-b border-brand-border pb-6 sm:pb-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-cyan">Library / Presets</p>
-        <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="text-3xl font-black tracking-tight text-brand-text sm:text-4xl">Presets</h1>
-            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-brand-muted sm:text-base">Discover starting points for synths, instruments, and sound-design sessions.</p>
-          </div>
-          <form onSubmit={submitSearch} className="w-full lg:max-w-md" role="search">
-            <label className="sr-only" htmlFor="preset-search">Search presets</label>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="relative min-w-0 flex-1">
-                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-muted" aria-hidden="true" />
-                <input id="preset-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search presets or plugins..." className="h-11 w-full rounded-xl border border-brand-border bg-brand-surface py-2.5 pl-11 pr-3 text-sm sm:text-base text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none" />
-              </div>
-              <Button type="submit" size="md" className="h-11 w-full sm:w-auto shrink-0">Search</Button>
-            </div>
-          </form>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Library / Presets"
+        title="Presets"
+        description="Starting points for synths, instruments, and sound-design sessions."
+      >
+        <SearchForm
+          id="preset-search"
+          label="Search presets"
+          placeholder="Search presets or plugins..."
+          value={query}
+          onChange={setQuery}
+          onSearch={submitSearch}
+          actionLabel="Search"
+        />
+      </PageHeader>
 
-      {error && (
-        <div className="my-6 flex flex-col gap-3 rounded-xl border border-red-300/40 bg-red-950/30 p-4 text-sm text-red-100 sm:flex-row sm:items-center sm:justify-between" role="alert">
-          <span>{error}</span><Button variant="secondary" size="sm" onClick={() => void loadPresets()}>Try again</Button>
-        </div>
-      )}
+      {error && <ErrorNotice className="mt-6" message={error} onRetry={() => void loadPresets()} />}
 
-      <section className="pt-6" aria-label="Preset results">
-        <div className="mb-4 flex items-center justify-between text-xs text-brand-muted">
-          <span>{loading ? 'Loading...' : `${filteredPresets.length} ${filteredPresets.length === 1 ? 'preset' : 'presets'} available`}</span>
-          {query && (
-            <button type="button" className="font-semibold text-brand-cyan hover:underline" onClick={() => { setQuery(''); setSearchParams({}, { replace: true }); }}>Clear search</button>
+      <section className="pt-6 sm:pt-7" aria-label="Preset results">
+        <div className="mb-4 flex items-baseline justify-between gap-4 border-t border-brand-border pt-4">
+          <h2 className="eyebrow">
+            {loading ? 'Loading…' : `${count} ${count === 1 ? 'preset' : 'presets'}`}
+          </h2>
+          {query.trim() && !loading && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="font-mono text-[11px] uppercase tracking-[0.16em] text-brand-accent underline decoration-brand-accent/30 underline-offset-4 hover:decoration-brand-accent"
+            >
+              Clear search
+            </button>
           )}
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" role="status" aria-live="polite">
-            {Array.from({ length: 8 }, (_, index) => <div key={index} className="aspect-[4/5] rounded-xl border border-brand-border bg-brand-surface animate-pulse" />)}
-            <span className="sr-only">Loading presets…</span>
-          </div>
-        ) : filteredPresets.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredPresets.map((preset) => <ContentCard key={preset.id} item={preset} typeLabel="Preset" onViewDetails={() => setSelectedPreset(preset)} />)}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-brand-border px-5 py-10 text-center">
-            <h2 className="text-lg font-bold text-brand-text">No presets match that search</h2>
-            <p className="mt-2 text-sm text-brand-muted">Try a different instrument, plugin name, or sound category.</p>
-            {query && <Button className="mt-4" variant="secondary" size="sm" onClick={() => { setQuery(''); setSearchParams({}, { replace: true }); }}>Clear search</Button>}
-          </div>
-        )}
+        <ContentGrid
+          loading={loading}
+          loadingLabel="Loading presets…"
+          isEmpty={count === 0}
+          emptyState={(
+            <EmptyState
+              title="No presets match that search"
+              description="Try a different instrument, plugin name, or sound category."
+              action={query.trim() ? <Button variant="secondary" size="sm" onClick={clearSearch}>Clear search</Button> : undefined}
+            />
+          )}
+        >
+          {filteredPresets.map((preset) => (
+            <ContentCard key={preset.id} item={preset} typeLabel="Preset" onViewDetails={() => setSelectedPreset(preset)} />
+          ))}
+        </ContentGrid>
       </section>
 
       {selectedPreset && <ContentModal item={selectedPreset} onClose={() => setSelectedPreset(null)} />}

@@ -1,15 +1,25 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Search } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { getGenres, getPlugins, getPresets, getSamplePacks } from '../services/graphqlService';
 import { BaseContent, Genre, Plugin, Preset, SamplePack } from '../types';
-import Button from '../components/Button';
 import ContentCard from '../components/ContentCard';
+import ContentGrid from '../components/ContentGrid';
 import ContentModal from '../components/ContentModal';
+import EmptyState from '../components/EmptyState';
+import ErrorNotice from '../components/ErrorNotice';
+import SearchForm from '../components/SearchForm';
 
 type CatalogItem = SamplePack | Preset | Plugin;
 
+const quickLinks = [
+  { to: '/packs', label: 'Sample packs' },
+  { to: '/presets', label: 'Presets' },
+  { to: '/plugins', label: 'Tools & VSTs' },
+];
+
 interface CatalogSectionProps {
+  index: string;
   title: string;
   description: string;
   to: string;
@@ -19,31 +29,44 @@ interface CatalogSectionProps {
   onViewDetails: (item: CatalogItem) => void;
 }
 
-const CatalogSection: React.FC<CatalogSectionProps> = ({ title, description, to, typeLabel, items, loading, onViewDetails }) => (
-  <section aria-labelledby={`${typeLabel.toLowerCase()}-heading`} className="pt-8 sm:pt-10 border-t border-brand-border first:border-t-0 first:pt-2 sm:first:pt-4">
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-cyan">Library</p>
-        <h2 id={`${typeLabel.toLowerCase()}-heading`} className="mt-1.5 text-2xl font-bold tracking-tight text-brand-text sm:text-3xl">{title}</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-brand-muted">{description}</p>
+const CatalogSection: React.FC<CatalogSectionProps> = ({ index, title, description, to, typeLabel, items, loading, onViewDetails }) => (
+  <section aria-labelledby={`${typeLabel.toLowerCase()}-heading`}>
+    <div className="flex flex-col gap-3 border-b border-brand-border pb-4 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
+      <div className="flex gap-4">
+        <span aria-hidden="true" className="mt-1.5 shrink-0 font-mono text-[11px] tracking-[0.16em] text-brand-muted">{index}</span>
+        <div className="min-w-0">
+          <h2 id={`${typeLabel.toLowerCase()}-heading`} className="display text-2xl leading-tight text-brand-text sm:text-3xl">{title}</h2>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-brand-muted">{description}</p>
+        </div>
       </div>
-      <Link to={to} className="inline-flex min-h-10 items-center gap-1.5 self-start text-sm font-semibold text-brand-cyan hover:text-brand-text sm:self-auto shrink-0 transition-colors">
-        Explore all <ArrowRight className="h-4 w-4" aria-hidden="true" />
+      <Link
+        to={to}
+        className="group inline-flex shrink-0 items-center gap-1.5 self-start text-[13px] font-medium text-brand-accent transition-colors hover:text-brand-accent-strong sm:self-auto"
+      >
+        Explore all
+        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
       </Link>
     </div>
 
-    {loading ? (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-live="polite" aria-label={`Loading ${title.toLowerCase()}`}>
-        {[0, 1, 2].map((index) => <div key={index} className="aspect-[4/5] rounded-xl border border-brand-border bg-brand-surface animate-pulse" />)}
-        <span className="sr-only">Loading {title.toLowerCase()}…</span>
-      </div>
-    ) : items.length > 0 ? (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map((item) => <ContentCard key={item.id} item={item} typeLabel={typeLabel} onViewDetails={() => onViewDetails(item)} />)}
-      </div>
-    ) : (
-      <div className="rounded-xl border border-dashed border-brand-border px-5 py-8 text-center text-sm text-brand-muted">No {title.toLowerCase()} are available right now. Check back later or explore another category.</div>
-    )}
+    <div className="mt-5">
+      <ContentGrid
+        loading={loading}
+        loadingLabel={`Loading ${title.toLowerCase()}…`}
+        isEmpty={items.length === 0}
+        skeletonCount={3}
+        columns={3}
+        emptyState={(
+          <EmptyState
+            title={`No ${title.toLowerCase()} yet`}
+            description="Nothing is listed in this category right now. Check back later or explore another part of the library."
+          />
+        )}
+      >
+        {items.map((item) => (
+          <ContentCard key={item.id} item={item} typeLabel={typeLabel} onViewDetails={() => onViewDetails(item)} />
+        ))}
+      </ContentGrid>
+    </div>
   </section>
 );
 
@@ -83,70 +106,84 @@ const HomePage: React.FC = () => {
     void loadCatalog();
   }, [loadCatalog]);
 
-  const handleSearch = (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleSearch = () => {
     const cleanQuery = query.trim();
     if (cleanQuery) navigate(`/search?q=${encodeURIComponent(cleanQuery)}`);
   };
 
   return (
-    <div className="pb-8">
-      <section className="border-b border-brand-border pb-8 sm:pb-12" aria-labelledby="home-title">
-        <div className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-cyan">Sound library for producers</p>
-          <h1 id="home-title" className="mt-3 max-w-2xl text-3xl font-black tracking-tight text-brand-text sm:text-4xl md:text-5xl lg:text-6xl">Find the sound that fits this session.</h1>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-brand-subtle sm:text-lg">Browse free sample packs, presets, and production tools without losing your place in the work.</p>
-        </div>
+    <div>
+      <section className="border-b border-brand-border pb-9 sm:pb-12" aria-labelledby="home-title">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-end lg:gap-14">
+          <div className="min-w-0">
+            <p className="eyebrow">Sound library for producers</p>
+            <h1 id="home-title" className="display mt-4 max-w-xl text-[2.25rem] leading-[1.02] text-brand-text sm:text-5xl lg:text-6xl">
+              Find the sound that fits this session.
+            </h1>
+            <p className="mt-4 max-w-lg text-base leading-relaxed text-brand-muted sm:text-lg">
+              Browse free sample packs, presets, and production tools without losing your place in the work.
+            </p>
 
-        <form onSubmit={handleSearch} className="mt-7 max-w-xl" role="search">
-          <label htmlFor="hero-search" className="sr-only">Search the library</label>
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-            <div className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-brand-muted" aria-hidden="true" />
-              <input
-                id="hero-search"
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search loops, synths, Amapiano..."
-                className="h-12 w-full rounded-xl border border-brand-border bg-brand-surface py-3 pl-11 pr-4 text-base text-brand-text placeholder:text-brand-muted focus:border-brand-cyan focus:outline-none"
-              />
-            </div>
-            <Button type="submit" size="lg" className="h-12 w-full sm:w-auto shrink-0">Search library</Button>
+            <SearchForm
+              id="hero-search"
+              label="Search the library"
+              placeholder="Search loops, synths, Amapiano..."
+              value={query}
+              onChange={setQuery}
+              onSearch={handleSearch}
+              actionLabel="Search library"
+              size="lg"
+              className="mt-7 max-w-xl"
+            />
           </div>
-        </form>
 
-        <nav className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm" aria-label="Browse categories">
-          <span className="text-xs text-brand-muted font-medium uppercase tracking-wider">Quick links:</span>
-          <Link to="/packs" className="font-semibold text-brand-cyan hover:underline">Sample packs</Link>
-          <Link to="/presets" className="font-semibold text-brand-cyan hover:underline">Presets</Link>
-          <Link to="/plugins" className="font-semibold text-brand-cyan hover:underline">Tools & VSTs</Link>
-        </nav>
+          <nav aria-label="Browse categories" className="border-t border-brand-border pt-4 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+            <p className="eyebrow">Browse</p>
+            <ul className="mt-2">
+              {quickLinks.map((link, index) => (
+                <li key={link.to} className="border-b border-brand-border">
+                  <Link
+                    to={link.to}
+                    className="group flex items-center justify-between gap-3 py-3 text-sm text-brand-subtle transition-colors hover:text-brand-accent"
+                  >
+                    <span>{link.label}</span>
+                    <span aria-hidden="true" className="font-mono text-[11px] tracking-[0.16em] text-brand-muted group-hover:text-brand-accent">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
       </section>
 
-      {error && (
-        <div className="mt-6 flex flex-col gap-3 rounded-xl border border-red-300/40 bg-red-950/30 p-4 text-sm text-red-100 sm:flex-row sm:items-center sm:justify-between" role="alert">
-          <span>{error}</span>
-          <Button variant="secondary" size="sm" onClick={() => void loadCatalog()}>Try again</Button>
-        </div>
-      )}
+      {error && <ErrorNotice className="mt-7" message={error} onRetry={() => void loadCatalog()} />}
 
-      <div className="space-y-8 sm:space-y-12">
-        <CatalogSection title="Featured sample packs" description="A short, practical selection of sound sources for your current project." to="/packs" typeLabel="Pack" items={packs} loading={loading} onViewDetails={setSelectedItem} />
-        <CatalogSection title="Latest presets" description="Start with settings designed to give synth and instrument ideas a clear direction." to="/presets" typeLabel="Preset" items={presets} loading={loading} onViewDetails={setSelectedItem} />
-        <CatalogSection title="Production tools" description="Browse the software and tools listed by the SoundWave community." to="/plugins" typeLabel="Plugin" items={plugins} loading={loading} onViewDetails={setSelectedItem} />
+      <div className="mt-9 space-y-10 sm:mt-12 sm:space-y-12">
+        <CatalogSection index="01" title="Featured sample packs" description="A short, practical selection of sound sources for your current project." to="/packs" typeLabel="Pack" items={packs} loading={loading} onViewDetails={setSelectedItem} />
+        <CatalogSection index="02" title="Latest presets" description="Settings designed to give synth and instrument ideas a clear direction." to="/presets" typeLabel="Preset" items={presets} loading={loading} onViewDetails={setSelectedItem} />
+        <CatalogSection index="03" title="Production tools" description="Software and tools listed by the SoundWave community." to="/plugins" typeLabel="Plugin" items={plugins} loading={loading} onViewDetails={setSelectedItem} />
       </div>
 
-      <section className="mt-10 border-t border-brand-border pt-8 sm:mt-12 sm:pt-10" aria-labelledby="genres-heading">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-cyan">Filter</p>
-        <h2 id="genres-heading" className="mt-1.5 text-2xl font-bold tracking-tight text-brand-text">Browse by genre</h2>
-        <p className="mt-1.5 text-sm leading-relaxed text-brand-muted">Choose a genre to open matching sample packs.</p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {genres.length > 0 ? genres.map((genre) => (
-            <Link key={genre.id} to={`/packs?genre=${encodeURIComponent(genre.name)}`} className="inline-flex min-h-10 items-center rounded-lg border border-brand-border bg-brand-surface px-3.5 py-1.5 text-sm font-medium text-brand-subtle transition-colors hover:border-brand-cyan hover:text-brand-text hover:bg-brand-raised">
-              {genre.name}
-            </Link>
-          )) : <p className="text-sm text-brand-muted">Genres will appear when the library is available.</p>}
+      <section className="mt-11 border-t border-brand-border pt-7 sm:mt-14 sm:pt-8" aria-labelledby="genres-heading">
+        <div className="flex gap-4">
+          <span aria-hidden="true" className="mt-1.5 shrink-0 font-mono text-[11px] tracking-[0.16em] text-brand-muted">04</span>
+          <div className="min-w-0">
+            <h2 id="genres-heading" className="display text-2xl leading-tight text-brand-text sm:text-3xl">Browse by genre</h2>
+            <p className="mt-2 text-sm leading-relaxed text-brand-muted">Choose a genre to open matching sample packs.</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {genres.length > 0 ? genres.map((genre) => (
+                <Link
+                  key={genre.id}
+                  to={`/packs?genre=${encodeURIComponent(genre.name)}`}
+                  className="inline-flex min-h-10 items-center border border-brand-border px-3.5 py-1.5 text-[13px] font-medium text-brand-subtle transition-colors hover:border-brand-border-strong hover:text-brand-text"
+                >
+                  {genre.name}
+                </Link>
+              )) : <p className="text-sm text-brand-muted">Genres will appear when the library is available.</p>}
+            </div>
+          </div>
         </div>
       </section>
 

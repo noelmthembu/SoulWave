@@ -1,18 +1,20 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const NotFoundPage: React.FC = () => {
-  return (
-    <div className="text-center py-20">
-      <h1 className="text-6xl font-extrabold text-brand-cyan">404</h1>
-      <h2 className="mt-4 text-3xl font-bold text-white">Page Not Found</h2>
-      <p className="mt-4 text-lg text-gray-400">Sorry, the page you are looking for does not exist.</p>
-      <Link to="/" className="mt-8 inline-block bg-brand-cyan text-brand-dark font-bold py-3 px-6 rounded-md hover:bg-cyan-300 transition-colors">
-        Go Back Home
-      </Link>
-    </div>
-  );
-};
+const NotFoundPage: React.FC = () => (
+  <div className="mx-auto max-w-md py-16 text-center sm:py-24">
+    <p className="eyebrow">Error 404</p>
+    <h1 className="display mt-3 text-4xl leading-tight text-brand-text sm:text-5xl">Page not found</h1>
+    <p className="mt-3 text-sm leading-relaxed text-brand-muted sm:text-base">
+      The page you are looking for does not exist or has moved.
+    </p>
+    <Link
+      to="/"
+      className="mt-7 inline-flex min-h-11 items-center justify-center border border-brand-accent bg-brand-accent px-5 text-sm font-medium text-brand-on-accent transition-colors hover:border-brand-accent-strong hover:bg-brand-accent-strong"
+    >
+      Back to the library
+    </Link>
+  </div>
+);
 
 export default NotFoundPage;

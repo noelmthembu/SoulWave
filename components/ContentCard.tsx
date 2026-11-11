@@ -15,55 +15,55 @@ const ContentCard: React.FC<ContentCardProps> = ({ item, onViewDetails, typeLabe
   const featured = Boolean((item as SamplePack).featured);
 
   return (
-    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-surface transition-all duration-200 hover:border-brand-muted/40 hover:shadow-lg">
+    <article className="group flex h-full min-w-0 flex-col border border-brand-border bg-brand-surface transition-colors duration-150 hover:border-brand-border-strong">
       <button
         type="button"
         onClick={onViewDetails}
-        className="relative aspect-[16/10] w-full overflow-hidden bg-brand-raised text-left"
+        className="relative aspect-[4/3] w-full overflow-hidden border-b border-brand-border bg-brand-raised text-left"
         aria-label={`View details for ${item.name}`}
       >
         {coverUrl && !imageFailed ? (
           <img
             src={coverUrl}
             alt=""
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transition-none"
             loading="lazy"
             decoding="async"
             onError={() => setImageFailed(true)}
           />
         ) : (
-          <div className="grid h-full place-items-center px-4 text-center text-xs sm:text-sm text-brand-muted">Artwork unavailable</div>
+          <div className="grid h-full place-items-center px-4 text-center text-xs text-brand-muted">Artwork unavailable</div>
         )}
-        <span className="absolute inset-x-0 bottom-0 bg-brand-canvas/85 px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-brand-text opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none backdrop-blur-xs">
-          View details
-        </span>
       </button>
 
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold">
-          {typeLabel && <span className="rounded-md bg-brand-raised px-2 py-0.5 text-brand-subtle">{typeLabel}</span>}
-          {featured && <span className="rounded-md bg-brand-cyan px-2 py-0.5 text-brand-ink font-bold">Featured</span>}
+      <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="eyebrow truncate">{typeLabel || 'Library'}</span>
+          {featured && (
+            <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-brand-accent">Featured</span>
+          )}
         </div>
 
-        <div className="mt-3 min-w-0">
-          <h3 className="line-clamp-1 text-base font-bold text-brand-text sm:text-lg" title={item.name}>{item.name}</h3>
-          <p className="mt-1.5 line-clamp-2 text-xs sm:text-sm leading-relaxed text-brand-muted">{item.description || 'Download details and source files are available in the item view.'}</p>
+        <div className="min-w-0">
+          <h3 className="display text-lg leading-snug text-brand-text sm:text-xl">
+            <span className="line-clamp-2">{item.name}</span>
+          </h3>
+          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-brand-muted">
+            {item.description || 'Download details and source files are available in the item view.'}
+          </p>
         </div>
 
-        <div className="mt-3 flex min-h-6 flex-wrap items-center gap-1.5" aria-label="Genres">
-          {genres.length > 0 ? genres.slice(0, 2).map((genre) => (
-            <span key={genre} className="truncate max-w-[120px] rounded-md border border-brand-border/80 bg-brand-canvas/50 px-2 py-0.5 text-xs text-brand-muted">{genre}</span>
-          )) : <span className="text-xs text-brand-muted">General</span>}
-          {genres.length > 2 && <span className="px-1 text-xs text-brand-muted">+{genres.length - 2}</span>}
-        </div>
+        <p className="mt-auto truncate border-t border-brand-border pt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-brand-muted" aria-label="Genres">
+          {genres.length > 0 ? genres.slice(0, 2).join(' · ') : 'General'}
+        </p>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 pt-2 border-t border-brand-border/40">
-          <Button variant="secondary" size="sm" className="w-full text-xs sm:text-sm" onClick={onViewDetails}>Details</Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="secondary" size="sm" className="w-full" onClick={onViewDetails}>Details</Button>
           <a
             href={item.downloadUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-brand-cyan bg-brand-cyan px-3 text-xs sm:text-sm font-semibold text-brand-ink transition-colors hover:border-brand-cyan-strong hover:bg-brand-cyan-strong"
+            className="inline-flex min-h-10 items-center justify-center rounded-none border border-brand-accent bg-brand-accent px-3 text-[13px] font-medium text-brand-on-accent transition-colors hover:border-brand-accent-strong hover:bg-brand-accent-strong"
             aria-label={`Open download for ${item.name}`}
           >
             Get
